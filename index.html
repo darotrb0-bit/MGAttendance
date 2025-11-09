@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheckMe Attendance App</title>
+  
+  <!-- ១. ផ្ទុក Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- ២. ផ្ទុក React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- ៣. ផ្ទុក Babel (សម្រាប់បកប្រែ JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- ៤. ផ្ទុក Firebase (Compat version ងាយស្រួលប្រើក្នុង HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+</head>
+<body class="transition-colors duration-500">
+  
+  <!-- ទីតាំងសម្រាប់ React App -->
+  <div id="root"></div>
+
+  <!-- ៥. ផ្ទុកកូដ React App របស់អ្នក (កែប្រែសម្រាប់ Glassmorphism) -->
+  <script type="text/babel">
+    // មិនបាច់ Import ព្រោះ React, ReactDOM, firebase មានជា Global ហើយ
+    const { useState, useEffect, useMemo } = React;
+
+    // ១. ប្រើ Firebase config (រក្សាទុកដដែល)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCgc3fq9mDHMCjTRRHD3BPBL31JkKZgXFc",
+      authDomain: "checkme-10e18.firebaseapp.com",
+      projectId: "checkme-10e18",
+      storageBucket: "checkme-10e18.firebasestorage.app",
+      messagingSenderId: "1030447497157",
+      appId: "1:1030447497157:web:9792086df1e864559fd5ac",
+      measurementId: "G-QCJ2JH4WH6"
+    };
+
+    // ២. ចាប់ផ្តើម Firebase (កែប្រែទៅជា Syntax របស់ v8/Compat)
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // --- ផ្ទុក Icon បែប SVG (រក្សាទុកដដែល) ---
+    const HomeIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    );
+    const UserIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    );
+    const SettingsIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 .54 1.81v.65a2 2 0 0 1-.54 1.81l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-.54-1.81v-.65a2 2 0 0 1 .54 1.81l.15.1a2 2 0 0 0 .73 2.73l-.22.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    );
+    const ClockIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+    );
+    const BuildingIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="16" height="18" rx="2" ry="2"></rect>
+        <line x1="8" y1="9" x2="16" y2="9"></line>
+        <line x1="8" y1="13" x2="16" y2="13"></line>
+        <line x1="8" y1="17" x2="12" y2="17"></line>
+      </svg>
+    );
+    const IdIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+        <line x1="9" y1="10" x2="15" y2="10"></line>
+        <line x1="9" y1="14" x2="15" y2="14"></line>
+      </svg>
+    );
+    const ChevronLeftIcon = ({ className, ...props }) => (
+      <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    );
+    const ChevronRightIcon = ({ className, ...props }) => (
+      <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    );
+
+    // --- មុខងារថ្មី៖ Object សម្រាប់ផ្ទុក Themes ទាំង 12 ---
+    const themes = {
+      glassCyan: {
+        name: "កញ្ចក់ (ខៀវ)",
+        preview: 'bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400',
+        body: 'bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400',
+        header: 'bg-white/10 backdrop-blur-lg text-white border-b border-white/20',
+        card: 'bg-white/10 backdrop-blur-md text-white border border-white/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-200',
+        textAccent: 'text-cyan-300',
+        textGreen: 'text-green-300',
+        textRed: 'text-red-300',
+        iconRingGreen: 'bg-green-500/20 backdrop-blur-sm',
+        iconRingRed: 'bg-red-500/20 backdrop-blur-sm',
+        iconRingMuted: 'bg-white/10 backdrop-blur-sm',
+        toggleBase: 'bg-gray-500/50',
+        toggleActive: 'bg-cyan-500',
+        navActive: 'text-white bg-white/20',
+        navInactive: 'text-gray-200 hover:bg-white/10',
+        modal: 'bg-white/10 backdrop-blur-xl border border-white/20 text-white',
+        input: 'bg-white/10 border-white/20 text-white placeholder-gray-300 focus:ring-cyan-500 focus:border-cyan-500',
+        btnPrimary: 'bg-cyan-500/50 text-white hover:bg-cyan-500/70',
+        btnSecondary: 'bg-white/10 text-white hover:bg-white/20',
+      },
+      glassGreen: {
+        name: "កញ្ចក់ (បៃតង)",
+        preview: 'bg-gradient-to-br from-green-600 via-teal-500 to-emerald-400',
+        body: 'bg-gradient-to-br from-green-600 via-teal-500 to-emerald-400',
+        header: 'bg-white/10 backdrop-blur-lg text-white border-b border-white/20',
+        card: 'bg-white/10 backdrop-blur-md text-white border border-white/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-200',
+        textAccent: 'text-emerald-300',
+        textGreen: 'text-green-300',
+        textRed: 'text-red-300',
+        iconRingGreen: 'bg-green-500/20 backdrop-blur-sm',
+        iconRingRed: 'bg-red-500/20 backdrop-blur-sm',
+        iconRingMuted: 'bg-white/10 backdrop-blur-sm',
+        toggleBase: 'bg-gray-500/50',
+        toggleActive: 'bg-emerald-500',
+        navActive: 'text-white bg-white/20',
+        navInactive: 'text-gray-200 hover:bg-white/10',
+        modal: 'bg-white/10 backdrop-blur-xl border border-white/20 text-white',
+        input: 'bg-white/10 border-white/20 text-white placeholder-gray-300 focus:ring-emerald-500 focus:border-emerald-500',
+        btnPrimary: 'bg-emerald-500/50 text-white hover:bg-emerald-500/70',
+        btnSecondary: 'bg-white/10 text-white hover:bg-white/20',
+      },
+      glassPink: {
+        name: "កញ្ចក់ (ផ្កាឈូក)",
+        preview: 'bg-gradient-to-br from-pink-600 via-fuchsia-500 to-purple-400',
+        body: 'bg-gradient-to-br from-pink-600 via-fuchsia-500 to-purple-400',
+        header: 'bg-white/10 backdrop-blur-lg text-white border-b border-white/20',
+        card: 'bg-white/10 backdrop-blur-md text-white border border-white/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-200',
+        textAccent: 'text-fuchsia-300',
+        textGreen: 'text-green-300',
+        textRed: 'text-red-300',
+        iconRingGreen: 'bg-green-500/20 backdrop-blur-sm',
+        iconRingRed: 'bg-red-500/20 backdrop-blur-sm',
+        iconRingMuted: 'bg-white/10 backdrop-blur-sm',
+        toggleBase: 'bg-gray-500/50',
+        toggleActive: 'bg-fuchsia-500',
+        navActive: 'text-white bg-white/20',
+        navInactive: 'text-gray-200 hover:bg-white/10',
+        modal: 'bg-white/10 backdrop-blur-xl border border-white/20 text-white',
+        input: 'bg-white/10 border-white/20 text-white placeholder-gray-300 focus:ring-fuchsia-500 focus:border-fuchsia-500',
+        btnPrimary: 'bg-fuchsia-500/50 text-white hover:bg-fuchsia-500/70',
+        btnSecondary: 'bg-white/10 text-white hover:bg-white/20',
+      },
+      lightBlue: {
+        name: "ភ្លឺ (ខៀវ)",
+        preview: 'bg-gray-100',
+        body: 'bg-gray-100',
+        header: 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg',
+        card: 'bg-white text-gray-800 border border-gray-100 shadow-lg',
+        textPrimary: 'text-gray-800',
+        textSecondary: 'text-gray-500',
+        textAccent: 'text-blue-600',
+        textGreen: 'text-green-700',
+        textRed: 'text-red-700',
+        iconRingGreen: 'bg-green-100',
+        iconRingRed: 'bg-red-100',
+        iconRingMuted: 'bg-gray-100',
+        toggleBase: 'bg-gray-300',
+        toggleActive: 'bg-blue-600',
+        navActive: 'text-blue-600 bg-blue-50 scale-105',
+        navInactive: 'text-gray-500 hover:bg-gray-50',
+        modal: 'bg-white text-gray-900',
+        input: 'border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500',
+        btnPrimary: 'bg-blue-600 text-white hover:bg-blue-700',
+        btnSecondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+      },
+      lightGreen: {
+        name: "ភ្លឺ (បៃតង)",
+        preview: 'bg-green-50',
+        body: 'bg-green-50',
+        header: 'bg-gradient-to-r from-green-600 to-emerald-700 text-white shadow-lg',
+        card: 'bg-white text-gray-800 border border-gray-100 shadow-lg',
+        textPrimary: 'text-gray-800',
+        textSecondary: 'text-gray-500',
+        textAccent: 'text-emerald-600',
+        textGreen: 'text-green-700',
+        textRed: 'text-red-700',
+        iconRingGreen: 'bg-green-100',
+        iconRingRed: 'bg-red-100',
+        iconRingMuted: 'bg-gray-100',
+        toggleBase: 'bg-gray-300',
+        toggleActive: 'bg-emerald-600',
+        navActive: 'text-emerald-600 bg-emerald-50 scale-105',
+        navInactive: 'text-gray-500 hover:bg-gray-50',
+        modal: 'bg-white text-gray-900',
+        input: 'border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-emerald-500 focus:border-emerald-500',
+        btnPrimary: 'bg-emerald-600 text-white hover:bg-emerald-700',
+        btnSecondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+      },
+      darkSlate: {
+        name: "ងងឹត (Slate)",
+        preview: 'bg-gray-900',
+        body: 'bg-gray-900',
+        header: 'bg-gray-800 text-white shadow-lg border-b border-gray-700',
+        card: 'bg-gray-800 text-white border border-gray-700 shadow-lg',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-400',
+        textAccent: 'text-cyan-400',
+        textGreen: 'text-green-400',
+        textRed: 'text-red-400',
+        iconRingGreen: 'bg-green-500/20',
+        iconRingRed: 'bg-red-500/20',
+        iconRingMuted: 'bg-gray-700',
+        toggleBase: 'bg-gray-600',
+        toggleActive: 'bg-cyan-500',
+        navActive: 'text-cyan-400 bg-gray-700 scale-105',
+        navInactive: 'text-gray-400 hover:bg-gray-700',
+        modal: 'bg-gray-800 text-white border border-gray-700',
+        input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-cyan-500 focus:border-cyan-500',
+        btnPrimary: 'bg-cyan-600 text-white hover:bg-cyan-700',
+        btnSecondary: 'bg-gray-700 text-gray-200 hover:bg-gray-600',
+      },
+      darkPurple: {
+        name: "ងងឹត (ស្វាយ)",
+        preview: 'bg-gray-900',
+        body: 'bg-gray-900',
+        header: 'bg-gradient-to-r from-purple-800 to-indigo-800 text-white shadow-lg',
+        card: 'bg-gray-800 text-white border border-gray-700 shadow-lg',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-400',
+        textAccent: 'text-purple-400',
+        textGreen: 'text-green-400',
+        textRed: 'text-red-400',
+        iconRingGreen: 'bg-green-500/20',
+        iconRingRed: 'bg-red-500/20',
+        iconRingMuted: 'bg-gray-700',
+        toggleBase: 'bg-gray-600',
+        toggleActive: 'bg-purple-500',
+        navActive: 'text-purple-400 bg-gray-700 scale-105',
+        navInactive: 'text-gray-400 hover:bg-gray-700',
+        modal: 'bg-gray-800 text-white border border-gray-700',
+        input: 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500',
+        btnPrimary: 'bg-purple-600 text-white hover:bg-purple-700',
+        btnSecondary: 'bg-gray-700 text-gray-200 hover:bg-gray-600',
+      },
+      solarizedLight: {
+        name: "Solarized (ភ្លឺ)",
+        preview: 'bg-[#fdf6e3]',
+        body: 'bg-[#fdf6e3]',
+        header: 'bg-[#eee8d5] text-[#073642] shadow-lg border-b border-[#ddd6c1]',
+        card: 'bg-[#eee8d5] text-[#073642] border border-[#ddd6c1] shadow-lg',
+        textPrimary: 'text-[#073642]',
+        textSecondary: 'text-[#586e75]',
+        textAccent: 'text-[#268bd2]',
+        textGreen: 'text-[#859900]',
+        textRed: 'text-[#dc322f]',
+        iconRingGreen: 'bg-[#859900]/20',
+        iconRingRed: 'bg-[#dc322f]/20',
+        iconRingMuted: 'bg-[#ddd6c1]',
+        toggleBase: 'bg-[#ddd6c1]',
+        toggleActive: 'bg-[#268bd2]',
+        navActive: 'text-[#268bd2] bg-[#fdf6e3] scale-105',
+        navInactive: 'text-[#586e75] hover:bg-[#fdf6e3]',
+        modal: 'bg-[#eee8d5] text-[#073642] border border-[#ddd6c1]',
+        input: 'bg-[#fdf6e3] border-[#ddd6c1] text-[#073642] placeholder-gray-500 focus:ring-[#268bd2] focus:border-[#268bd2]',
+        btnPrimary: 'bg-[#268bd2] text-white hover:bg-[#2aa198]',
+        btnSecondary: 'bg-[#ddd6c1] text-[#073642] hover:bg-[#cbbfab]',
+      },
+      solarizedDark: {
+        name: "Solarized (ងងឹត)",
+        preview: 'bg-[#002b36]',
+        body: 'bg-[#002b36]',
+        header: 'bg-[#073642] text-[#93a1a1] shadow-lg border-b border-[#001f27]',
+        card: 'bg-[#073642] text-[#93a1a1] border border-[#001f27] shadow-lg',
+        textPrimary: 'text-[#93a1a1]',
+        textSecondary: 'text-[#586e75]',
+        textAccent: 'text-[#268bd2]',
+        textGreen: 'text-[#859900]',
+        textRed: 'text-[#dc322f]',
+        iconRingGreen: 'bg-[#859900]/20',
+        iconRingRed: 'bg-[#dc322f]/20',
+        iconRingMuted: 'bg-[#001f27]',
+        toggleBase: 'bg-[#586e75]',
+        toggleActive: 'bg-[#268bd2]',
+        navActive: 'text-[#268bd2] bg-[#001f27] scale-105',
+        navInactive: 'text-[#586e75] hover:bg-[#001f27]',
+        modal: 'bg-[#073642] text-[#93a1a1] border border-[#001f27]',
+        input: 'bg-[#002b36] border-[#586e75] text-[#93a1a1] placeholder-gray-500 focus:ring-[#268bd2] focus:border-[#268bd2]',
+        btnPrimary: 'bg-[#268bd2] text-white hover:bg-[#2aa198]',
+        btnSecondary: 'bg-[#586e75] text-[#93a1a1] hover:bg-[#657b83]',
+      },
+      strawberry: {
+        name: "Strawberry",
+        preview: 'bg-pink-50',
+        body: 'bg-pink-50',
+        header: 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg',
+        card: 'bg-white text-gray-800 border border-pink-100 shadow-lg',
+        textPrimary: 'text-gray-800',
+        textSecondary: 'text-gray-500',
+        textAccent: 'text-pink-600',
+        textGreen: 'text-green-700',
+        textRed: 'text-red-600',
+        iconRingGreen: 'bg-green-100',
+        iconRingRed: 'bg-red-100',
+        iconRingMuted: 'bg-pink-100',
+        toggleBase: 'bg-pink-200',
+        toggleActive: 'bg-pink-500',
+        navActive: 'text-pink-600 bg-pink-100 scale-105',
+        navInactive: 'text-gray-500 hover:bg-pink-100',
+        modal: 'bg-white text-gray-900',
+        input: 'border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500',
+        btnPrimary: 'bg-pink-600 text-white hover:bg-pink-700',
+        btnSecondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+      },
+      orange: {
+        name: "ពន្លឺ (ទឹកក្រូច)",
+        preview: 'bg-orange-50',
+        body: 'bg-orange-50',
+        header: 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg',
+        card: 'bg-white text-gray-800 border border-orange-100 shadow-lg',
+        textPrimary: 'text-gray-800',
+        textSecondary: 'text-gray-500',
+        textAccent: 'text-orange-600',
+        textGreen: 'text-green-700',
+        textRed: 'text-red-600',
+        iconRingGreen: 'bg-green-100',
+        iconRingRed: 'bg-red-100',
+        iconRingMuted: 'bg-orange-100',
+        toggleBase: 'bg-orange-200',
+        toggleActive: 'bg-orange-500',
+        navActive: 'text-orange-600 bg-orange-100 scale-105',
+        navInactive: 'text-gray-500 hover:bg-orange-100',
+        modal: 'bg-white text-gray-900',
+        input: 'border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-orange-500 focus:border-orange-500',
+        btnPrimary: 'bg-orange-600 text-white hover:bg-orange-700',
+        btnSecondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+      },
+      royal: {
+        name: "ងងឹត (Royal)",
+        preview: 'bg-gradient-to-br from-indigo-900 to-blue-900',
+        body: 'bg-gradient-to-br from-indigo-900 to-blue-900',
+        header: 'bg-blue-900/50 backdrop-blur-lg text-white shadow-lg border-b border-blue-700',
+        card: 'bg-blue-900/50 backdrop-blur-md text-white border border-blue-700 shadow-lg',
+        textPrimary: 'text-white',
+        textSecondary: 'text-gray-300',
+        textAccent: 'text-yellow-400',
+        textGreen: 'text-green-400',
+        textRed: 'text-red-400',
+        iconRingGreen: 'bg-green-500/20',
+        iconRingRed: 'bg-red-500/20',
+        iconRingMuted: 'bg-blue-800/50',
+        toggleBase: 'bg-blue-800',
+        toggleActive: 'bg-yellow-500',
+        navActive: 'text-yellow-400 bg-blue-800/50 scale-105',
+        navInactive: 'text-gray-300 hover:bg-blue-800/50',
+        modal: 'bg-blue-900/50 backdrop-blur-xl border border-blue-700 text-white',
+        input: 'bg-blue-800/50 border-blue-700 text-white placeholder-gray-400 focus:ring-yellow-500 focus:border-yellow-500',
+        btnPrimary: 'bg-yellow-600 text-white hover:bg-yellow-700',
+        btnSecondary: 'bg-blue-800/50 text-gray-200 hover:bg-blue-800',
+      },
+    };
+
+
+    // --- Function ជំនួយ យកថ្ងៃខែឆ្នាំបច្ចុប្បន្ន (Format: YYYY-MM-DD) ---
+    const getLocalDate = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // --- Component ថ្មី សម្រាប់បន្ថែម Font និង Animation ---
+    const StyleLoader = () => (
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;700&display=swap');
+        
+        /* Animation សម្រាប់ Card ពេល load */
+        @keyframes fadeInCard {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-card {
+          opacity: 0; /* ចាប់ផ្តើមដោយមើលមិនឃើញ */
+          animation: fadeInCard 0.4s ease-out forwards;
+        }
+
+        /* Animation សម្រាប់ប្តូរទំព័រ (Page Content) */
+        @keyframes pageFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .page-content-animation {
+          animation: pageFadeIn 0.3s ease-in-out;
+        }
+      `}</style>
+    );
+
+    // --- Component ថ្មី សម្រាប់ Edit Modal (កែប្រែសម្រាប់ Theme) ---
+    const EditModal = ({ record, onSave, onClose, theme }) => {
+      const [checkIn, setCheckIn] = useState(record.checkIn || '');
+      const [checkOut, setCheckOut] = useState(record.checkOut || '');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSave = async () => {
+        setIsSaving(true);
+        try {
+          await onSave({
+            ...record,
+            checkIn: checkIn,
+            checkOut: checkOut,
+          });
+        } catch (error) {
+          console.error("Error saving record:", error);
+          console.log("Error saving record!");
+        } finally {
+          setIsSaving(false);
+          onClose();
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4 transition-opacity">
+          <div className={`rounded-lg shadow-xl w-full max-w-sm p-5 transition-all ${theme.modal}`}>
+            <h2 className="text-xl font-bold mb-2">កែប្រែទិន្នន័យ</h2>
+            <div className={`mb-4 p-3 rounded-md ${theme.card}`}>
+              <p className={`font-semibold ${theme.textPrimary}`}>{record.employeeName}</p>
+              <p className={`text-sm ${theme.textSecondary}`}>ID: {record.employeeId} | {record.formattedDate || record.dateId}</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme.textSecondary}`}>Check In</label>
+                <input
+                  type="text"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${theme.input}`}
+                  placeholder="ឧទាហរណ៍: 08:00 AM"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${theme.textSecondary}`}>Check Out</label>
+                <input
+                  type="text"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-md shadow-sm focus:outline-none ${theme.input}`}
+                  placeholder="ឧទាហរណ៍: 05:30 PM"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                disabled={isSaving}
+                className={`px-4 py-2 rounded-md disabled:opacity-50 transition-colors ${theme.btnSecondary}`}
+              >
+                បោះបង់
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={`px-4 py-2 rounded-md disabled:opacity-50 transition-colors ${theme.btnPrimary}`}
+              >
+                {isSaving ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+
+    // --- Component ថ្មី សម្រាប់ Toggle Switch (កែប្រែសម្រាប់ Theme) ---
+    const ToggleSwitch = ({ label, enabled, onChange, theme }) => (
+      <div className={`flex items-center justify-between p-4 rounded-lg shadow-sm ${theme.card}`}>
+        <span className={`font-medium ${theme.textPrimary}`}>{label}</span>
+        <button
+          onClick={() => onChange(!enabled)}
+          className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+            enabled ? theme.toggleActive : theme.toggleBase
+          }`}
+        >
+          <span
+            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+              enabled ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+    );
+
+
+    // --- Component សម្រាប់ទំព័រនីមួយៗ ---
+
+    // --- Component ថ្មី: Pagination Controls (កែប្រែសម្រាប់ Theme) ---
+    const PaginationControls = ({ currentPage, totalPages, onNext, onPrev, theme }) => {
+      if (totalPages <= 1) return null;
+
+      return (
+        <div className="flex items-center justify-between mt-6 px-4">
+          <button
+            onClick={onPrev}
+            disabled={currentPage === 1}
+            className={`flex items-center justify-center p-2 rounded-full shadow-md transition-all disabled:opacity-50 ${theme.btnSecondary} ${theme.textPrimary} disabled:${theme.textSecondary}`}
+          >
+            <ChevronLeftIcon className="w-6 h-6" />
+          </button>
+          <span className={`font-medium text-sm ${theme.textPrimary}`}>
+            ទំព័រ {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={onNext}
+            disabled={currentPage === totalPages}
+            className={`flex items-center justify-center p-2 rounded-full shadow-md transition-all disabled:opacity-50 ${theme.btnSecondary} ${theme.textPrimary} disabled:${theme.textSecondary}`}
+          >
+            <ChevronRightIcon className="w-6 h-6" />
+          </button>
+        </div>
+      );
+    };
+
+    // Component សម្រាប់បង្ហាញបញ្ជីវត្តមាន (ទំព័រ Home) - (កែប្រែសម្រាប់ Theme)
+    const AttendanceList = ({ records, loading, error, entryMode, onRecordClick, currentPage, setCurrentPage, theme }) => {
+      
+      const ITEMS_PER_PAGE = 12;
+      const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
+      const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+      const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+      const currentItems = records.slice(indexOfFirstItem, indexOfLastItem);
+      
+      const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+      const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+      
+      if (loading) {
+        return (
+          <div className="flex justify-center items-center h-full">
+            <p className={`${theme.textSecondary}`}>កំពុងទាញទិន្នន័យ...</p>
+          </div>
+        );
+      }
+
+      if (error) {
+        return (
+          <div className="p-4">
+            <div className="bg-red-500/30 backdrop-blur-md border border-red-400 text-white px-4 py-3 rounded relative" role="alert">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          </div>
+        );
+      }
+
+      if (records.length === 0) {
+        return (
+          <div className="flex justify-center items-center h-64">
+            <p className={`text-center p-6 ${theme.textSecondary}`}>មិនមានទិន្នន័យសម្រាប់បង្ហាញទេ។</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="pb-4">
+          {entryMode && (
+            <div className={`border text-white px-4 py-3 rounded-lg text-center m-4 ${theme.toggleActive} bg-opacity-30 border-opacity-50`}>
+              <p className="font-semibold">របៀបកែប្រែ (Edit Mode) កំពុងបើក</p>
+              <p className="text-sm">សូមចុចលើ Card ណាមួយដើម្បីកែប្រែ។</p>
+            </div>
+          )}
+          <div className="space-y-4 px-4">
+            {currentItems.map((record, index) => (
+              <div 
+                key={record.id} 
+                onClick={() => entryMode && onRecordClick(record)}
+                className={`p-4 rounded-xl shadow-lg overflow-hidden transition-all fade-in-card ${theme.card} ${
+                  entryMode ? 'cursor-pointer hover:shadow-xl hover:ring-2' : 'hover:shadow-lg'
+                }`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {/* Section 1: Main Info (កែប្រែសម្រាប់ Theme) */}
+                <div className="flex items-center">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <h2 className={`text-xl font-bold truncate ${theme.textPrimary}`} title={record.employeeName}>{record.employeeName}</h2>
+                      <div className={`flex-shrink-0 flex items-center ml-2 ${theme.textSecondary}`}>
+                        <IdIcon className={`w-4 h-4 mr-1.5 ${theme.textSecondary}`} />
+                        <span className="text-sm font-mono font-medium">ID: {record.employeeId}</span>
+                      </div>
+                    </div>
+                    <div className={`flex items-center mt-1 ${theme.textSecondary}`}>
+                      <BuildingIcon className={`w-4 h-4 mr-2 ${theme.textAccent}`} />
+                      <span className="text-sm font-medium truncate">{record.department}</span>
+                    </div>
+                    <span className={`text-sm font-medium mt-1 block ${theme.textAccent}`}>{record.formattedDate || record.dateId}</span>
+                  </div>
+                </div>
+                
+                {/* Section 2: Check-in/Out (កែប្រែសម្រាប់ Theme) */}
+                <div className="grid grid-cols-2 gap-4 pt-4 mt-4 border-t border-white/10">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-full ${theme.iconRingGreen}`}>
+                      <ClockIcon className={`w-5 h-5 ${theme.textGreen}`} />
+                    </div>
+                    <div>
+                      <span className={`text-xs ${theme.textSecondary}`}>Check In</span>
+                      <p className={`font-bold text-lg ${theme.textGreen}`}>{record.checkIn}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-full ${record.checkOut ? theme.iconRingRed : theme.iconRingMuted}`}>
+                      <ClockIcon className={`w-5 h-5 ${record.checkOut ? theme.textRed : theme.textSecondary}`} />
+                    </div>
+                    <div>
+                      <span className={`text-xs ${theme.textSecondary}`}>Check Out</span>
+                      <p className={`font-bold text-lg ${record.checkOut ? theme.textRed : theme.textSecondary}`}>
+                        {record.checkOut || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <PaginationControls 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onNext={nextPage}
+            onPrev={prevPage}
+            theme={theme}
+          />
+        </div>
+      );
+    };
+
+    // Component សម្រាប់ទំព័រ Profile (កែប្រែសម្រាប់ Theme)
+    const ProfilePage = ({ theme }) => (
+      <div className="p-6 text-center">
+        <UserIcon className={`w-24 h-24 mx-auto ${theme.textSecondary} opacity-50`} />
+        <h2 className={`text-2xl font-semibold mt-4 ${theme.textPrimary}`}>ទំព័រគណនី</h2>
+        <p className={`${theme.textSecondary} mt-2`}>មុខងារនេះនឹងត្រូវបន្ថែមក្នុងពេលឆាប់ៗនេះ។</p>
+      </div>
+    );
+
+    // Component សម្រាប់ទំព័រ Settings (កែប្រែសម្រាប់ Theme + បន្ថែម Theme Picker)
+    const SettingsPage = ({
+      filterToday, setFilterToday,
+      filterIncomplete, setFilterIncomplete,
+      entryMode, setEntryMode,
+      theme,
+      activeThemeKey, setActiveThemeKey
+    }) => (
+      <div className="p-4 space-y-4">
+        <h2 className={`text-xl font-semibold px-2 ${theme.textPrimary}`}>តម្រងបង្ហាញ (Filters)</h2>
+        <ToggleSwitch
+          label="បង្ហាញតែថ្ងៃនេះ"
+          enabled={filterToday}
+          onChange={setFilterToday}
+          theme={theme}
+        />
+        <ToggleSwitch
+          label="បង្ហាញតែទិន្នន័យមិនពេញលេញ"
+          enabled={filterIncomplete}
+          onChange={setFilterIncomplete}
+          theme={theme}
+        />
+        
+        <h2 className={`text-xl font-semibold px-2 pt-4 ${theme.textPrimary}`}>ការបញ្ចូលទិន្នន័យ</h2>
+        <ToggleSwitch
+          label="បើករបៀបកែប្រែ/បញ្ចូល"
+          enabled={entryMode}
+          onChange={setEntryMode}
+          theme={theme}
+        />
+        {entryMode && (
+          <p className={`text-sm px-2 ${theme.textSecondary}`}>
+            នៅពេលបើក, អ្នកអាចចូលទៅទំព័រដើម ហើយចុចលើ Card ណាមួយដើម្បីកែប្រែទិន្នន័យ។
+          </p>
+        )}
+        
+        {/* --- មុខងារថ្មី៖ Theme Picker --- */}
+        <h2 className={`text-xl font-semibold px-2 pt-4 ${theme.textPrimary}`}>រចនាបថ (UI Themes)</h2>
+        <div className={`p-4 rounded-lg shadow-sm ${theme.card}`}>
+          <div className="grid grid-cols-4 gap-4">
+            {Object.entries(themes).map(([themeKey, themeData]) => (
+              <div key={themeKey} className="flex flex-col items-center space-y-2">
+                <button
+                  onClick={() => setActiveThemeKey(themeKey)}
+                  title={themeData.name}
+                  className={`w-12 h-12 rounded-full border-2 transition-all ${themeData.preview} ${
+                    activeThemeKey === themeKey ? 'ring-4 ring-offset-2 ring-cyan-500' : 'border-white/20'
+                  }`}
+                />
+                <span className={`text-xs ${theme.textSecondary}`}>{themeData.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+      </div>
+    );
+
+    // --- Component គោលរបស់កម្មវិធី ---
+    function App() {
+      // State (រក្សាទុកដដែល)
+      const [attendanceRecords, setAttendanceRecords] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [userId, setUserId] = useState(null);
+      const [activePage, setActivePage] = useState('home');
+      const [filterToday, setFilterToday] = useState(false);
+      const [filterIncomplete, setFilterIncomplete] = useState(false);
+      const [entryMode, setEntryMode] = useState(false);
+      const [editingRecord, setEditingRecord] = useState(null);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [touchStartX, setTouchStartX] = useState(null);
+
+      // --- State ថ្មី៖ សម្រាប់ Theme ---
+      const [activeThemeKey, setActiveThemeKey] = useState('glassCyan');
+      const currentTheme = themes[activeThemeKey];
+
+      // --- Effect ថ្មី៖ ប្តូរពណ៌ Body ពេល Theme ផ្លាស់ប្តូរ ---
+      useEffect(() => {
+        document.body.className = `transition-colors duration-500 ${currentTheme.body}`;
+      }, [currentTheme]);
+
+      // ៤. ផ្ទៀងផ្ទាត់អ្នកប្រើប្រាស់ (រក្សាទុកដដែល)
+      useEffect(() => {
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+          if (user) {
+            setUserId(user.uid);
+          } else {
+            auth.signInAnonymously().catch((authError) => {
+              console.error("Error signing in anonymously:", authError);
+              setError("មិនអាចភ្ជាប់ទៅសេវាកម្មផ្ទៀងផ្ទាត់បានទេ។");
+              setLoading(false);
+            });
+          }
+        });
+        return () => unsubscribeAuth();
+      }, []);
+
+      // ៥. ទាញទិន្នន័យពី Firestore (រក្សាទុកដដែល)
+      useEffect(() => {
+        if (!userId) return;
+
+        const allRecordsQuery = db.collectionGroup('records');
+        setLoading(true);
+        setError(null);
+
+        const unsubscribeFirestore = allRecordsQuery.onSnapshot((querySnapshot) => {
+          const records = [];
+          querySnapshot.forEach((doc) => {
+            const employeeId = doc.ref.parent.parent ? doc.ref.parent.parent.id : 'unknown';
+            records.push({ 
+              id: `${employeeId}-${doc.id}`,
+              employeeId: employeeId,
+              dateId: doc.id,
+              ...doc.data() 
+            });
+          });
+
+          records.sort((a, b) => b.dateId.localeCompare(a.dateId));
+          
+          setAttendanceRecords(records);
+          setLoading(false);
+        }, (firestoreError) => {
+          console.error("Error fetching Firestore data: ", firestoreError);
+          setError("ទាញទិន្នន័យមិនជោគជ័យ។ សូមពិនិត្យ Security Rules (ប្រហែលជាត្រូវបន្ថែម Index សម្រាប់ Collection Group)។");
+          setLoading(false);
+        });
+
+        return () => unsubscribeFirestore();
+      }, [userId]);
+      
+      // --- មុខងារថ្មី: ត្រងទិន្នន័យ (Filter Records) --- (រក្សាទុកដដែល)
+      const filteredRecords = useMemo(() => {
+        let records = attendanceRecords;
+        if (filterToday) {
+          const today = getLocalDate();
+          records = records.filter(record => record.dateId === today);
+        }
+        if (filterIncomplete) {
+          records = records.filter(record => !record.checkIn || !record.checkOut);
+        }
+        return records;
+      }, [attendanceRecords, filterToday, filterIncomplete]);
+      
+      // --- Effect ថ្មី: Reset ទំព័រ ពេល Filter --- (រក្សាទុកដដែល)
+      useEffect(() => {
+        setCurrentPage(1);
+      }, [filterToday, filterIncomplete]);
+      
+      // --- មុខងារថ្មី: រក្សាទុកទិន្នន័យ (Save/Update) (រក្សាទុកដដែល) ---
+      const handleSaveRecord = async (updatedData) => {
+        if (!updatedData.employeeId || !updatedData.dateId) {
+          console.error("Missing Employee ID or Date ID");
+          return;
+        }
+        const docRef = db.collection('attendance').doc(updatedData.employeeId).collection('records').doc(updatedData.dateId);
+        try {
+          await docRef.update({
+            checkIn: updatedData.checkIn,
+            checkOut: updatedData.checkOut
+          });
+          console.log("Record updated successfully!");
+          setEditingRecord(null);
+        } catch (e) {
+          console.error("Error updating document: ", e);
+        }
+      };
+
+      // --- មុខងារថ្មី: Swipe Gesture Handlers --- (រក្សាទុកដដែល)
+      const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+      };
+
+      const handleTouchEnd = (e) => {
+        if (!touchStartX) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        const threshold = 50;
+        
+        if (activePage === 'home') {
+          const totalPages = Math.ceil(filteredRecords.length / 12);
+          
+          if (diffX > threshold) {
+            setCurrentPage(prev => Math.max(prev - 1, 1));
+          } else if (diffX < -threshold) {
+            setCurrentPage(prev => Math.min(prev + 1, totalPages));
+          }
+        }
+        
+        setTouchStartX(null);
+      };
+
+      // Function សម្រាប់ប្តូរចំណងជើង Header តាមទំព័រ (រក្សាទុកដដែល)
+      const getHeaderTitle = () => {
+        switch (activePage) {
+          case 'home':
+            return 'បញ្ជីវត្តមាន';
+          case 'profile':
+            return 'គណនីរបស់ខ្ញុំ';
+          case 'settings':
+            return 'ការកំណត់';
+          default:
+            return 'CheckMe App';
+        }
+      };
+
+      // ៧. ផ្នែកបង្ហាញទិន្នន័យ (UI) - (កែប្រែសម្រាប់ Theme)
+      return (
+        <div 
+          className="flex justify-center items-center min-h-screen font-sans"
+          style={{ fontFamily: "'Kantumruy Pro', sans-serif" }}
+        >
+          <StyleLoader />
+
+          {/* Mobile App Container - ដក BG ចេញ */}
+          <div className="w-full max-w-md h-screen shadow-2xl rounded-lg overflow-hidden flex flex-col">
+            
+            {/* Header - (កែប្រែសម្រាប់ Theme) */}
+            <header className={`p-4 shadow-lg w-full z-10 transition-colors ${currentTheme.header}`}>
+              <h1 className="text-xl font-bold text-center tracking-wide">{getHeaderTitle()}</h1>
+            </header>
+
+            {/* Content Area - (កែប្រែសម្រាប់ Theme) */}
+            <main 
+              className="flex-1 overflow-y-auto"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div key={activePage} className="page-content-animation">
+                {activePage === 'home' && (
+                  <AttendanceList 
+                    records={filteredRecords}
+                    loading={loading} 
+                    error={error}
+                    entryMode={entryMode}
+                    onRecordClick={(record) => setEditingRecord(record)}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    theme={currentTheme}
+                  />
+                )}
+                {activePage === 'profile' && <ProfilePage theme={currentTheme} />}
+                {activePage === 'settings' && (
+                  <SettingsPage
+                    filterToday={filterToday}
+                    setFilterToday={setFilterToday}
+                    filterIncomplete={filterIncomplete}
+                    setFilterIncomplete={setFilterIncomplete}
+                    entryMode={entryMode}
+                    setEntryMode={setEntryMode}
+                    theme={currentTheme}
+                    activeThemeKey={activeThemeKey}
+                    setActiveThemeKey={setActiveThemeKey}
+                  />
+                )}
+              </div>
+            </main>
+
+            {/* Footer Navigation Bar ថ្មី - (កែប្រែសម្រាប់ Theme) */}
+            <footer className={`w-full shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] flex justify-around items-center p-2 transition-colors ${currentTheme.header}`}>
+              {/* ប៊ូតុង Home */}
+              <button
+                onClick={() => setActivePage('home')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-24 transition-all duration-200 ${activePage === 'home' ? currentTheme.navActive : currentTheme.navInactive}`}
+              >
+                <HomeIcon className="w-6 h-6" />
+                <span className="text-xs font-medium mt-1">ទំព័រដើម</span>
+              </button>
+              
+              {/* ប៊ូតុង Profile */}
+              <button
+                onClick={() => setActivePage('profile')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-24 transition-all duration-200 ${activePage === 'profile' ? currentTheme.navActive : currentTheme.navInactive}`}
+              >
+                <UserIcon className="w-6 h-6" />
+                <span className="text-xs font-medium mt-1">គណនី</span>
+              </button>
+
+              {/* ប៊ូតុង Settings */}
+              <button
+                onClick={() => setActivePage('settings')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-24 transition-all duration-200 ${activePage === 'settings' ? currentTheme.navActive : currentTheme.navInactive}`}
+              >
+                <SettingsIcon className="w-6 h-6" />
+                <span className="text-xs font-medium mt-1">កំណត់</span>
+              </button>
+            </footer>
+            
+            {/* បង្ហាញ Modal ពេល editingRecord មានទិន្នន័យ (កែប្រែសម្រាប់ Theme) */}
+            {editingRecord && (
+              <EditModal
+                record={editingRecord}
+                onSave={handleSaveRecord}
+                onClose={() => setEditingRecord(null)}
+                theme={currentTheme}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ៦. ដំណើរការ App ក្នុង #root
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+
+  </script>
+
+</body>
+</html>
