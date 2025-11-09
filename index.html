@@ -144,7 +144,6 @@
     );
     
     // --- និយមន័យ Themes (12 ពណ៌) ---
-    // [bgClass, textClass, name]
     const themes = {
       'glass': ['bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400', 'text-white', 'កញ្ចក់ (ដំបូង)'],
       'green': ['bg-gradient-to-br from-green-500 to-emerald-600', 'text-white', 'កញ្ចក់ (បៃតង)'],
@@ -568,8 +567,16 @@
       const [currentPage, setCurrentPage] = useState(1);
       const [touchStartX, setTouchStartX] = useState(null);
       
+      // *** FIX: កែប្រែរបៀបទាញយក Theme ***
       // យក Theme object បច្ចុប្បន្ន
-      const theme = themes[activeThemeKey] || themes['glass'];
+      const themeArray = themes[activeThemeKey] || themes['glass'];
+      // បំប្លែង Array ទៅជា Object ដើម្បីឱ្យងាយស្រួលហៅប្រើ និងជួសជុល Error
+      const theme = {
+        key: activeThemeKey,
+        bgClass: themeArray[0],
+        textClass: themeArray[1],
+        name: themeArray[2]
+      };
 
       // --- ផ្ទៀងផ្ទាត់អ្នកប្រើប្រាស់ ---
       useEffect(() => {
@@ -701,7 +708,8 @@
       };
       
       // --- កំណត់ Theme Class សម្រាប់ App ទាំងមូល ---
-      const [bgClass, textClass] = theme;
+      // *** FIX: កែប្រែរបៀបទាញយក Class ពី Object ថ្មី ***
+      const { bgClass, textClass } = theme;
       const isGlass = bgClass.includes('gradient');
       const headerBg = isGlass ? 'bg-white/10 backdrop-blur-lg' : 'bg-white shadow-lg';
       const headerText = isGlass ? 'text-white' : 'text-gray-800';
