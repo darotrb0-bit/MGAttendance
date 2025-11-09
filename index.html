@@ -430,22 +430,24 @@
                 {/* Section 2: Check-in/Out */}
                 <div className={`grid grid-cols-2 gap-4 pt-4 mt-4 ${borderT}`}>
                   <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-full ${bgIconGreen}`}>
-                      <ClockIcon className={`w-5 h-5 ${textGreen}`} />
+                    <div className={`p-3 rounded-full ${record.checkIn ? bgIconGreen : bgIconRed}`}>
+                      <ClockIcon className={`w-5 h-5 ${record.checkIn ? textGreen : textRed}`} />
                     </div>
                     <div>
                       <span className={`text-xs ${textSecondary}`}>Check In</span>
-                      <p className={`font-bold text-lg ${textGreen}`}>{record.checkIn}</p>
+                      <p className={`font-bold text-lg ${record.checkIn ? textGreen : textRed}`}>
+                        {record.checkIn || 'អវត្តមាន'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className={`p-3 rounded-full ${record.checkOut ? bgIconRed : bgIconMuted}`}>
-                      <ClockIcon className={`w-5 h-5 ${record.checkOut ? textRed : textMuted}`} />
+                    <div className={`p-3 rounded-full ${record.checkOut ? bgIconRed : bgIconRed}`}>
+                      <ClockIcon className={`w-5 h-5 ${record.checkOut ? textRed : textRed}`} />
                     </div>
                     <div>
                       <span className={`text-xs ${textSecondary}`}>Check Out</span>
-                      <p className={`font-bold text-lg ${record.checkOut ? textRed : textMuted}`}>
-                        {record.checkOut || 'N/A'}
+                      <p className={`font-bold text-lg ${record.checkOut ? textRed : textRed}`}>
+                        {record.checkOut || 'អវត្តមាន'}
                       </p>
                     </div>
                   </div>
@@ -577,6 +579,23 @@
         textClass: themeArray[1],
         name: themeArray[2]
       };
+
+      // --- ថ្មី: កំណត់កម្ពស់អេក្រង់ (Fix បញ្ហាលើទូរស័ព្ទ) ---
+      useEffect(() => {
+        const setAppHeight = () => {
+          // បង្កើត CSS Variable មួយឈ្មោះ --app-height ដែលផ្ទុកកម្ពស់ពិត
+          document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        };
+        
+        // ហៅ Function នេះពេលមានការ Resize (ដូចជាពេលបង្វិលទូរស័ព្ទ)
+        window.addEventListener('resize', setAppHeight);
+        
+        // ហៅ Function នេះភ្លាមៗពេល App ចាប់ផ្តើម
+        setAppHeight(); 
+        
+        // លុប Event Listener ពេល Component បិទ
+        return () => window.removeEventListener('resize', setAppHeight);
+      }, []);
 
       // --- ផ្ទៀងផ្ទាត់អ្នកប្រើប្រាស់ ---
       useEffect(() => {
@@ -722,8 +741,8 @@
       return (
         <div className={`w-full h-full min-h-screen ${bgClass}`} style={{ fontFamily: "'Kantumruy Pro', sans-serif" }}>
           
-          {/* Mobile App Container */}
-          <div className="w-full max-w-md mx-auto h-screen shadow-2xl overflow-hidden flex flex-col">
+          {/* Mobile App Container - *** FIX: ប្តូរ h-screen ទៅ h-[var(--app-height)] *** */}
+          <div className="w-full max-w-md mx-auto h-[var(--app-height)] shadow-2xl overflow-hidden flex flex-col">
             
             {/* Header */}
             <header className={`flex-shrink-0 p-4 w-full z-10 transition-colors duration-300 ${headerBg}`}>
