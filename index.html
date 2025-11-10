@@ -15,7 +15,7 @@
   <!-- 3. ផ្ទុក Babel (សម្រាប់បកប្រែ JSX) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- 4. ផ្ទុក Firebase (v8 compat - ងាយស្រួលប្រើក្នុង HTML តែមួយ) -->
+  <!-- 4. ផ្ទុក Firebase (v8 compat) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -65,16 +65,1434 @@
     }
   </style>
 </head>
-<body>
+<body class="bg-gray-100">
   
   <!-- နေရာដែល React នឹង Render កម្មវិធីចូល -->
   <div id="root"></div>
 
-  <!-- 6. (កែប្រែ) ផ្ទុក Component ទាំងអស់ មុនគេ -->
-  <script type="text/babel" src="components.jsx"></script>
+  <!-- 
+    ================================================================
+    --- ផ្នែកទី ១: COMPONENTS (អតីត components.jsx) ---
+    ================================================================
+  -->
+  <script type="text/babel">
+    // --- ឯកសារនេះផ្ទុកនូវ Components ទាំងអស់ ---
+    const { useState: useState_Component, useEffect: useEffect_Component, useMemo: useMemo_Component, useCallback: useCallback_Component } = React;
+
+    // --- ១. ផ្ទុក Icons បែប SVG ---
+    const HomeIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    );
+    const UserIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    );
+    const SettingsIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 .54 1.81v.65a2 2 0 0 1-.54 1.81l-.15.1a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-.54-1.81v-.65a2 2 0 0 1 .54 1.81l.15.1a2 2 0 0 0 .73 2.73l.22.38a2 2 0 0 0 2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    );
+    const ClockIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+    );
+    const BuildingIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="16" height="18" rx="2" ry="2"></rect>
+        <line x1="8" y1="9" x2="16" y2="9"></line>
+        <line x1="8" y1="13" x2="16" y2="13"></line>
+        <line x1="8" y1="17" x2="12" y2="17"></line>
+      </svg>
+    );
+    const IdIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+        <line x1="9" y1="10" x2="15" y2="10"></line>
+        <line x1="9" y1="14" x2="15" y2="14"></line>
+      </svg>
+    );
+    const ChevronLeftIcon = ({ className, ...props }) => (
+      <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    );
+    const ChevronRightIcon = ({ className, ...props }) => (
+      <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    );
+    const ChartBarIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 20V10M12 20V4M6 20V14"></path>
+      </svg>
+    );
+    const ClipboardListIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+        <line x1="12" y1="11" x2="12" y2="17"></line>
+        <line x1="9" y1="14" x2="15" y2="14"></line>
+      </svg>
+    );
+
+    // --- ២. ផ្ទុក Themes ---
+    const themes = {
+      glass: ['bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400', 'text-white', 'កញ្ចក់ (ដើម)'],
+      light: ['bg-gray-100', 'text-gray-800', 'ភ្លឺ (Light)'],
+      dark: ['bg-gray-900', 'text-gray-100', 'ងងឹត (Dark)'],
+      slate: ['bg-slate-800', 'text-slate-100', 'ងងឹត (Slate)'],
+      sky: ['bg-sky-600', 'text-white', 'មេឃ (Sky)'],
+      solarizedLight: ['bg-yellow-50', 'text-yellow-900', 'Solarized (ភ្លឺ)'],
+      solarizedDark: ['bg-neutral-900', 'text-neutral-100', 'Solarized (ងងឹត)'],
+      strawberry: ['bg-pink-100', 'text-pink-800', 'Strawberry'],
+      emerald: ['bg-emerald-700', 'text-white', 'ត្បូង (Emerald)'],
+      royal: ['bg-indigo-800', 'text-indigo-100', 'រាជ (Royal)'],
+      hotpink: ['bg-pink-500', 'text-white', 'ផ្កាឈូក (ខ្លាំង)'],
+      white: ['bg-white', 'text-black', 'ស (White)'],
+    };
+
+    // --- ៣. Functions ជំនួយ ---
+    const getLocalDate = (date = new Date()) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    // (ថ្មី) យកម៉ោងបច្ចុប្បន្ន
+    const getLocalTime = () => {
+        return new Date().toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+    };
+
+    const formatKhmerDate = (dateString) => {
+      if (!dateString) return "";
+      try {
+        const date = new Date(dateString + 'T00:00:00');
+        const day = date.getDate();
+        const monthIndex = date.getMonth();
+        const year = date.getFullYear();
+        
+        const khmerMonths = [
+          'មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា',  
+          'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆកា', 'ធ្នូ'
+        ];
+        
+        return `ទី ${toKhmerNumber(day)} ${khmerMonths[monthIndex]} ${toKhmerNumber(year)}`;
+      } catch (e) {
+        console.error("Error formatting Khmer date:", e);
+        return dateString;
+      }
+    };
+
+    const toKhmerNumber = (num) => {
+      if (num === null || num === undefined) return '';
+      const str = String(num);
+      const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+      return str.replace(/[0-9]/g, (digit) => khmerDigits[parseInt(digit)]);
+    };
+
+    const checkEntryType = (entry) => {
+      if (!entry || entry.trim() === '') return 'EMPTY';
+      if (/^\d{2}:\d{2}\s(AM|PM)$/i.test(entry)) {
+        return 'TIME';
+      }
+      return 'LEAVE';
+    };
+
+
+    // --- ៤. Components សម្រាប់ UI ---
+
+    // Component សម្រាប់ Edit Modal
+    const EditModal = ({ record, onSave, onClose, theme }) => {
+      const [checkIn, setCheckIn] = useState_Component(record.checkIn || '');
+      const [checkOut, setCheckOut] = useState_Component(record.checkOut || '');
+      const [isSaving, setIsSaving] = useState_Component(false);
+      
+      const isGlass = theme.bgClass.includes('gradient');
+      const modalBg = isGlass ? 'bg-white/30 backdrop-blur-xl' : 'bg-white';
+      const textTitle = isGlass ? 'text-white' : 'text-gray-900';
+      const textLabel = isGlass ? 'text-gray-100' : 'text-gray-700';
+      const textInput = isGlass ? 'text-white placeholder-gray-300' : 'text-gray-900 placeholder-gray-400';
+      const inputBg = isGlass ? 'bg-white/20 border-white/30' : 'bg-white border-gray-300';
+      const infoBg = isGlass ? 'bg-black/20' : 'bg-gray-100';
+
+      const handleSave = async () => {
+        setIsSaving(true);
+        try {
+          // (កែប្រែ) បញ្ជូនទិន្នន័យទាំងអស់ទៅ handleSaveRecord
+          await onSave({
+            ...record,
+            checkIn: checkIn,
+            checkOut: checkOut,
+          });
+        } catch (error) {
+          console.error("Error saving record:", error);
+        } finally {
+          setIsSaving(false);
+          onClose();
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 page-content-animation">
+          <div className={`rounded-2xl shadow-xl w-full max-w-sm p-5 ${modalBg}`}>
+            <h2 className={`text-xl font-bold mb-2 ${textTitle}`}>កែប្រែទិន្នន័យ</h2>
+            <div className={`mb-4 p-3 rounded-lg ${infoBg}`}>
+              <p className={`font-semibold ${textTitle}`}>{record.employeeName}</p>
+              <p className={`text-sm ${textLabel}`}>ID: {toKhmerNumber(record.employeeId)} | {formatKhmerDate(record.dateId)}</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>Check In</label>
+                <input
+                  type="text"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg} ${textInput}`}
+                  placeholder="ឧទាហរណ៍: 08:00 AM"
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>Check Out</label>
+                <input
+                  type="text"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg} ${textInput}`}
+                  placeholder="ឧទាហរណ៍: 05:30 PM"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                disabled={isSaving}
+                className={`px-4 py-2 rounded-md hover:opacity-80 disabled:opacity-50 ${isGlass ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-800'}`}
+              >
+                បោះបង់
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    // --- (ថ្មី) Component សម្រាប់ Manual CheckIn/Out Modal (Admin) ---
+    const ManualEntryModal = ({ employee, mode, dateId, onSave, onClose, theme }) => {
+      // mode = 'checkIn' or 'checkOut'
+      const [entryValue, setEntryValue] = useState_Component(getLocalTime());
+      const [isSaving, setIsSaving] = useState_Component(false);
+      
+      const isGlass = theme.bgClass.includes('gradient');
+      const modalBg = isGlass ? 'bg-white/30 backdrop-blur-xl' : 'bg-white';
+      const textTitle = isGlass ? 'text-white' : 'text-gray-900';
+      const textLabel = isGlass ? 'text-gray-100' : 'text-gray-700';
+      const textInput = isGlass ? 'text-white placeholder-gray-300' : 'text-gray-900 placeholder-gray-400';
+      const inputBg = isGlass ? 'bg-white/20 border-white/30' : 'bg-white border-gray-300';
+      const infoBg = isGlass ? 'bg-black/20' : 'bg-gray-100';
+
+      const handleSave = async () => {
+        setIsSaving(true);
+        try {
+          await onSave({
+            employeeId: String(employee['ID']),
+            employeeName: employee['NAME'],
+            department: employee['DEPT'],
+            dateId: dateId,
+            [mode]: entryValue // 'checkIn': value or 'checkOut': value
+          });
+        } catch (error) {
+          console.error("Error saving manual entry:", error);
+        } finally {
+          setIsSaving(false);
+          onClose();
+        }
+      };
+      
+      const title = mode === 'checkIn' ? 'ចុះវត្តមាន (Check In)' : 'ចុះវត្តមាន (Check Out)';
+      const placeholder = 'ឧទា: 08:00 AM ឬ សុំច្បាប់';
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 page-content-animation">
+          <div className={`rounded-2xl shadow-xl w-full max-w-sm p-5 ${modalBg}`}>
+            <h2 className={`text-xl font-bold mb-2 ${textTitle}`}>{title}</h2>
+            <div className={`mb-4 p-3 rounded-lg ${infoBg}`}>
+              <p className={`font-semibold ${textTitle}`}>{employee['NAME']}</p>
+              <p className={`text-sm ${textLabel}`}>ID: {toKhmerNumber(employee['ID'])} | {formatKhmerDate(dateId)}</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+                  {mode === 'checkIn' ? 'ម៉ោងចូល ឬ មូលហេតុ' : 'ម៉ោងចេញ ឬ មូលហេតុ'}
+                </label>
+                <input
+                  type="text"
+                  value={entryValue}
+                  onChange={(e) => setEntryValue(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg} ${textInput}`}
+                  placeholder={placeholder}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={onClose}
+                disabled={isSaving}
+                className={`px-4 py-2 rounded-md hover:opacity-80 disabled:opacity-50 ${isGlass ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-800'}`}
+              >
+                បោះបង់
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSaving ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Component សម្រាប់ Toggle Switch
+    const ToggleSwitch = ({ label, enabled, onChange, theme }) => {
+      const isGlass = theme.bgClass.includes('gradient');
+      const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-sm border border-gray-100';
+      const textClass = isGlass ? 'text-gray-100' : 'text-gray-700';
+      
+      return (
+        <div className={`flex items-center justify-between p-4 rounded-xl ${bgCard}`}>
+          <span className={`font-medium ${textClass}`}>{label}</span>
+          <button
+            onClick={() => onChange(!enabled)}
+            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+              enabled ? 'bg-blue-500' : (isGlass ? 'bg-black/20' : 'bg-gray-300')
+            }`}
+          >
+            <span
+              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      );
+    };
+
+    // Component សម្រាប់ Pagination
+    const PaginationControls = ({ currentPage, totalPages, onNext, onPrev, theme }) => {
+      if (totalPages <= 1) return null;
+
+      const isGlass = theme.bgClass.includes('gradient');
+      const btnBg = isGlass ? 'bg-white/20 backdrop-blur-md text-white' : 'bg-white shadow-md text-blue-600';
+      const textClass = isGlass ? 'text-gray-100' : 'text-gray-700';
+
+      return (
+        <div className="flex items-center justify-between mt-6 px-4">
+          <button
+            onClick={onPrev}
+            disabled={currentPage === 1}
+            className={`flex items-center justify-center p-2 rounded-full transition-all disabled:opacity-30 ${btnBg} hover:opacity-80`}
+          >
+            <ChevronLeftIcon className="w-6 h-6" />
+          </button>
+          <span className={`font-medium text-sm ${textClass}`}>
+            ទំព័រ {toKhmerNumber(currentPage)} / {toKhmerNumber(totalPages)}
+          </span>
+          <button
+            onClick={onNext}
+            disabled={currentPage === totalPages}
+            className={`flex items-center justify-center p-2 rounded-full transition-all disabled:opacity-30 ${btnBg} hover:opacity-80`}
+          >
+            <ChevronRightIcon className="w-6 h-6" />
+          </button>
+        </div>
+      );
+    };
+
+    // --- ៥. Components សម្រាប់ទំព័រនីមួយៗ ---
+
+    // Component ទំព័រ Home (AttendanceList)
+    const AttendanceList = ({ records, loading, error, entryMode, onRecordClick, currentPage, setCurrentPage, theme }) => {
+      
+      const ITEMS_PER_PAGE = 12;
+      const totalPages = Math.ceil(records.length / ITEMS_PER_PAGE);
+      const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+      const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+      const currentItems = records.slice(indexOfFirstItem, indexOfLastItem);
+      
+      const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+      const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+      
+      // Theme Styles
+      const isGlass = theme.bgClass.includes('gradient');
+      const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-lg border border-gray-100';
+      const textTitle = isGlass ? 'text-white' : 'text-gray-800';
+      const textSubtitle = isGlass ? 'text-gray-200' : 'text-gray-500';
+      const textMuted = isGlass ? 'text-gray-300' : 'text-gray-400';
+      const textRed = 'text-red-500 font-bold';
+      const textGreen = isGlass ? 'text-green-300' : 'text-green-700';
+      const textRedTime = isGlass ? 'text-red-300' : 'text-red-700';
+      const bgIconGreen = isGlass ? 'bg-green-500/20' : 'bg-green-100';
+      const bgIconRed = isGlass ? 'bg-red-500/20' : 'bg-red-100';
+      const bgIconMuted = isGlass ? 'bg-gray-500/20' : 'bg-gray-100';
+      const borderCard = isGlass ? 'border-t border-white/10' : 'border-t border-gray-100';
+      const ringClass = isGlass ? 'hover:ring-white/50' : 'hover:ring-blue-500';
+
+      if (loading) {
+        return <div className="flex justify-center items-center h-full p-6">កំពុងទាញទិន្នន័យ...</div>;
+      }
+      if (error) {
+        return <div className="p-4"><div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert"><strong className="font-bold">Error: </strong><span className="block sm:inline">{error}</span></div></div>;
+      }
+      if (records.length === 0) {
+        return <div className="flex justify-center items-center h-64 p-6 text-center">មិនមានទិន្នន័យសម្រាប់បង្ហាញទេ។</div>;
+      }
+
+      return (
+        <div className="pb-4">
+          {entryMode && (
+            <div className={`px-4 py-3 rounded-lg text-center m-4 ${isGlass ? 'bg-white/20' : 'bg-blue-100 border border-blue-300 text-blue-800'}`}>
+              <p className="font-semibold">របៀបកែប្រែ (Edit Mode) កំពុងបើក</p>
+              <p className="text-sm">សូមចុចលើ Card ណាមួយដើម្បីកែប្រែ។</p>
+            </div>
+          )}
+          <div className="space-y-4 px-4">
+            {currentItems.map((record, index) => (
+              <div 
+                key={record.id} 
+                onClick={() => entryMode && onRecordClick(record)}
+                className={`p-4 rounded-xl overflow-hidden transition-all fade-in-card ${bgCard} ${
+                  entryMode ? `cursor-pointer hover:shadow-xl hover:ring-2 ${ringClass}` : ''
+                }`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                {/* Section 1: Main Info */}
+                <div className="flex items-center">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <h2 className={`text-xl font-bold truncate ${textTitle}`} title={record.employeeName}>{record.employeeName}</h2>
+                      <div className={`flex-shrink-0 flex items-center ml-2 ${textSubtitle}`}>
+                        <IdIcon className="w-4 h-4 mr-1.5" />
+                        <span className="text-sm font-mono font-medium">ID: {toKhmerNumber(record.employeeId)}</span>
+                      </div>
+                    </div>
+                    <div className={`flex items-center mt-1 ${textSubtitle}`}>
+                      <BuildingIcon className="w-4 h-4 mr-2" />
+                      <span className="text-sm font-medium truncate">{record.department}</span>
+                    </div>
+                    <span className={`text-sm font-medium mt-1 block ${isGlass ? 'text-blue-300' : 'text-blue-600'}`}>{formatKhmerDate(record.dateId)}</span>
+                  </div>
+                </div>
+                
+                {/* Section 2: Check-in/Out */}
+                <div className={`grid grid-cols-2 gap-4 pt-4 mt-4 ${borderCard}`}>
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-full ${checkEntryType(record.checkIn) === 'TIME' ? bgIconGreen : bgIconRed}`}>
+                      <ClockIcon className={`w-5 h-5 ${checkEntryType(record.checkIn) === 'TIME' ? textGreen : textRed}`} />
+                    </div>
+                    <div>
+                      <span className={`text-xs ${textSubtitle}`}>Check In</span>
+                      {checkEntryType(record.checkIn) === 'TIME' ? (
+                        <p className={`font-bold text-lg ${textGreen}`}>{toKhmerNumber(record.checkIn)}</p>
+                      ) : (
+                        <p className={`font-bold text-base ${textRed}`}>
+                          {checkEntryType(record.checkIn) === 'LEAVE' ? 'សុំច្បាប់' : 'អវត្តមាន'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-full ${checkEntryType(record.checkOut) === 'TIME' ? bgIconRed : (checkEntryType(record.checkIn) === 'TIME' ? bgIconMuted : bgIconRed)}`}>
+                      <ClockIcon className={`w-5 h-5 ${checkEntryType(record.checkOut) === 'TIME' ? textRedTime : (checkEntryType(record.checkIn) === 'TIME' ? textMuted : textRed)}`} />
+                    </div>
+                    <div>
+                      <span className={`text-xs ${textSubtitle}`}>Check Out</span>
+                      {checkEntryType(record.checkOut) === 'TIME' ? (
+                        <p className={`font-bold text-lg ${textRedTime}`}>{toKhmerNumber(record.checkOut)}</p>
+                      ) : (
+                        <p className={`font-bold text-base ${checkEntryType(record.checkIn) === 'TIME' ? textMuted : textRed}`}>
+                          {checkEntryType(record.checkOut) === 'LEAVE' ? 'សុំច្បាប់' : 'អវត្តមាន'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <PaginationControls 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onNext={nextPage}
+            onPrev={prevPage}
+            theme={theme}
+          />
+        </div>
+      );
+    };
+
+    // Component ទំព័រ Profile
+    const ProfilePage = ({ theme }) => {
+      const isGlass = theme.bgClass.includes('gradient');
+      const textTitle = isGlass ? 'text-white' : 'text-gray-800';
+      const textSubtitle = isGlass ? 'text-gray-300' : 'text-gray-500';
+      
+      return (
+        <div className="p-6 text-center">
+          <UserIcon className={`w-24 h-24 mx-auto ${isGlass ? 'text-white/30' : 'text-gray-300'}`} />
+          <h2 className={`text-2xl font-semibold mt-4 ${textTitle}`}>ទំព័រគណនី</h2>
+          <p className={`mt-2 ${textSubtitle}`}>មុខងារនេះនឹងត្រូវបន្ថែមក្នុងពេលឆាប់ៗនេះ។</p>
+        </div>
+      );
+    };
+
+    // Component ទំព័រ Report
+    const ReportPage = ({ records, theme }) => {
+      const [selectedDate, setSelectedDate] = useState_Component(getLocalDate());
+
+      const stats = useMemo_Component(() => {
+        const todayRecords = records.filter(r => r.dateId === selectedDate);
+        
+        const leaveRecords = [];
+        const attendanceRecords = [];
+
+        for (const record of todayRecords) {
+          const checkInType = checkEntryType(record.checkIn);
+          const checkOutType = checkEntryType(record.checkOut);
+          
+          if (checkInType === 'LEAVE' || checkOutType === 'LEAVE') {
+            leaveRecords.push(record);
+          } else {
+            attendanceRecords.push(record);
+          }
+        }
+        
+        let totalToday = attendanceRecords.length;
+        let completeToday = 0;
+        let scannedInOnlyToday = 0;
+        let incompleteToday = 0;
+        let onLeaveToday = leaveRecords.length;
+        
+        const statsByDept = {};
+
+        for (const record of attendanceRecords) {
+          const dept = (record.department || 'N/A').toUpperCase();
+          if (!statsByDept[dept]) {
+            statsByDept[dept] = { totalAttendance: 0, complete: 0, scannedInOnly: 0, incomplete: 0, onLeave: 0 };
+          }
+          
+          statsByDept[dept].totalAttendance++;
+          
+          const checkInType = checkEntryType(record.checkIn);
+          const checkOutType = checkEntryType(record.checkOut);
+
+          if (checkInType === 'TIME' && checkOutType === 'TIME') {
+            completeToday++;
+            statsByDept[dept].complete++;
+          } else if (checkInType === 'TIME' && checkOutType !== 'TIME') {
+            scannedInOnlyToday++;
+            statsByDept[dept].scannedInOnly++;
+          } else {
+            incompleteToday++;
+            statsByDept[dept].incomplete++;
+          }
+        }
+        
+        for (const record of leaveRecords) {
+            const dept = (record.department || 'N/A').toUpperCase();
+            if (!statsByDept[dept]) {
+                statsByDept[dept] = { totalAttendance: 0, complete: 0, scannedInOnly: 0, incomplete: 0, onLeave: 0 };
+            }
+            statsByDept[dept].onLeave++;
+        }
+
+        return {
+          totalToday,
+          completeToday,
+          scannedInOnlyToday,
+          incompleteToday,
+          onLeaveToday,
+          statsByDept
+        };
+      }, [records, selectedDate]);
+
+      const isGlass = theme.bgClass.includes('gradient');
+      const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-md';
+      const bgHeader = isGlass ? 'bg-black/10' : 'bg-gray-50 border-b border-gray-100';
+      const textTitle = isGlass ? 'text-white' : 'text-gray-800';
+      const textLabel = isGlass ? 'text-gray-100' : 'text-gray-600';
+      const textValue = isGlass ? 'text-white' : 'text-gray-900';
+      const textHeader = isGlass ? 'text-blue-300' : 'text-blue-600';
+      const inputBg = isGlass ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-gray-300 text-gray-900';
+
+      const StatItem = ({ label, value }) => (
+        <div className="flex justify-between items-center p-3">
+          <span className={`text-sm ${textLabel}`}>{label}</span>
+          <span className={`font-bold text-lg ${textValue}`}>{toKhmerNumber(value)}</span>
+        </div>
+      );
+
+      const formattedTitle = formatKhmerDate(selectedDate);
+
+      return (
+        <div className="p-4 space-y-6">
+          <h2 className={`text-center text-lg font-semibold ${textHeader}`}>
+            ទិន្នន័យប្រចាំ{formattedTitle}
+          </h2>
+          
+          <div className="px-0">
+            <label className={`block text-sm font-medium mb-1 ${isGlass ? 'text-gray-100' : 'text-gray-700'}`}>
+              ជ្រើសរើសកាលបរិច្ឆេទ
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg}`}
+            />
+          </div>
+
+          <div className={`rounded-xl overflow-hidden ${bgCard}`}>
+            <div className={`p-3 ${bgHeader}`}>
+              <h3 className={`font-semibold ${textTitle}`}>សរុបទូទៅ (ប្រចាំថ្ងៃ)</h3>
+            </div>
+            <div className="divide-y divide-gray-100/10">
+              <StatItem label="បុគ្គលិកបានស្កេន (សរុបថ្ងៃនេះ)" value={stats.totalToday} />
+              <StatItem label="ចំនួនបុគ្គលិកបានស្កេនពេញលេញ" value={stats.completeToday} />
+              <StatItem label="ចំនួនបុគ្គលិកបានស្កេនចូល" value={stats.scannedInOnlyToday} />
+              <StatItem label="ចំនួនបុគ្គលិកទិន្នន័យមិនពេញលេញ" value={stats.incompleteToday} />
+              <StatItem label="សុំច្បាប់" value={stats.onLeaveToday} />
+            </div>
+          </div>
+          
+          <div>
+            <h3 className={`font-semibold mb-2 ${textTitle}`}>សរុបតាមក្រុម (ប្រចាំថ្ងៃ)</h3>
+            <div className="space-y-4">
+              {Object.keys(stats.statsByDept).length === 0 ? (
+                <div className={`p-4 rounded-xl text-center ${bgCard} ${textLabel}`}>
+                  មិនមានទិន្នន័យសម្រាប់ថ្ងៃ {formattedTitle} ទេ។
+                </div>
+              ) : (
+                Object.entries(stats.statsByDept).map(([deptName, deptStats]) => (
+                  <div key={deptName} className={`rounded-xl overflow-hidden ${bgCard}`}>
+                    <div className={`p-3 ${bgHeader}`}>
+                      <h4 className={`font-semibold ${textTitle}`}>{deptName}</h4>
+                    </div>
+                    <div className="divide-y divide-gray-100/10">
+                      <StatItem label="សរុបក្នុងក្រុម (វត្តមាន)" value={deptStats.totalAttendance} />
+                      <StatItem label="ចំនួនបុគ្គលិកបានស្កេនពេញលេញ" value={deptStats.complete} />
+                      <StatItem label="ចំនួនបុគ្គលិកបានស្កេនចូល" value={deptStats.scannedInOnly} />
+                      <StatItem label="ចំនួនបុគ្គលិកទិន្នន័យមិនពេញលេញ" value={deptStats.incomplete} />
+                      <StatItem label="សុំច្បាប់" value={deptStats.onLeave} />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+
+    // Component ទំព័រ Settings
+    const SettingsPage = ({
+      filterToday, setFilterToday,
+      filterIncomplete, setFilterIncomplete,
+      filterIncompleteNotToday, setFilterIncompleteNotToday,
+      entryMode, setEntryMode,
+      activeThemeKey, onThemeChange,
+      theme,
+      // (ថ្មី) Props សម្រាប់ Admin Filter
+      adminGroupFilter, setAdminGroupFilter, availableGroups
+    }) => {
+      
+      const isGlass = theme.bgClass.includes('gradient');
+      const textTitle = isGlass ? 'text-white' : 'text-gray-800';
+      const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-sm';
+      const textLabel = isGlass ? 'text-gray-100' : 'text-gray-700';
+      // (ថ្មី) Style សម្រាប់ Dropdown
+      const inputBg = isGlass ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-gray-300 text-gray-900';
+      const optionBg = isGlass ? 'bg-gray-800 text-white' : 'bg-white text-black';
+      
+      // Logic សម្រាប់ Filter (Mutually Exclusive)
+      const handleFilterChange = (setter, value) => {
+        setFilterToday(setter === setFilterToday ? value : false);
+        setFilterIncomplete(setter === setFilterIncomplete ? value : false);
+        setFilterIncompleteNotToday(setter === setFilterIncompleteNotToday ? value : false);
+      };
+      
+      return (
+        <div className="p-4 space-y-6">
+          
+          {/* ផ្នែក Filters */}
+          <div>
+            <h2 className={`text-xl font-semibold px-2 mb-2 ${textTitle}`}>តម្រងបង្ហាញ (ទំព័រដើម)</h2>
+            <div className="space-y-3">
+              <ToggleSwitch
+                label="បង្ហាញតែថ្ងៃនេះ"
+                enabled={filterToday}
+                onChange={(val) => handleFilterChange(setFilterToday, val)}
+                theme={theme}
+              />
+              <ToggleSwitch
+                label="បង្ហាញតែទិន្នន័យមិនពេញលេញ"
+                enabled={filterIncomplete}
+                onChange={(val) => handleFilterChange(setFilterIncomplete, val)}
+                theme={theme}
+              />
+              <ToggleSwitch
+                label="បង្ហាញមិនពេញលេញ (ក្រៅពីថ្ងៃនេះ)"
+                enabled={filterIncompleteNotToday}
+                onChange={(val) => handleFilterChange(setFilterIncompleteNotToday, val)}
+                theme={theme}
+              />
+            </div>
+          </div>
+          
+          {/* (ថ្មី) ផ្នែក Admin Filters */}
+          <div>
+            <h2 className={`text-xl font-semibold px-2 mb-2 pt-4 ${textTitle}`}>តម្រង (ទំព័រ Admin)</h2>
+            <div className={`p-4 rounded-xl space-y-3 ${bgCard}`}>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+                  ត្រងតាមក្រុម
+                </label>
+                <select
+                  value={adminGroupFilter}
+                  onChange={(e) => setAdminGroupFilter(e.target.value)}
+                  className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg}`}
+                >
+                  <option value="ALL" className={optionBg}>-- គ្រប់ក្រុម --</option>
+                  {availableGroups.map(group => (
+                    <option key={group} value={group} className={optionBg}>{group}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* ផ្នែក បញ្ចូលទិន្នន័យ */}
+          <div>
+            <h2 className={`text-xl font-semibold px-2 mb-2 pt-4 ${textTitle}`}>ការបញ្ចូលទិន្នន័យ</h2>
+            <ToggleSwitch
+              label="បើករបៀបកែប្រែ/បញ្ចូល"
+              enabled={entryMode}
+              onChange={setEntryMode}
+              theme={theme}
+            />
+            {entryMode && (
+              <p className={`text-sm px-2 mt-2 ${isGlass ? 'text-gray-200' : 'text-gray-600'}`}>
+                នៅពេលបើក, អ្នកអាចចូលទៅទំព័រដើម ហើយចុចលើ Card ណាមួយដើម្បីកែប្រែទិន្នន័យ។
+              </p>
+            )}
+          </div>
+          
+          {/* ផ្នែក Themes */}
+          <div>
+            <h2 className={`text-xl font-semibold px-2 mb-2 pt-4 ${textTitle}`}>រចនាបថ (UI Themes)</h2>
+            <div className={`p-4 rounded-xl ${bgCard}`}>
+              <div className="grid grid-cols-4 gap-4">
+                {Object.entries(themes).map(([key, themeData]) => (
+                  <div key={key} className="flex flex-col items-center" onClick={() => onThemeChange(key)}>
+                    <button 
+                      className={`w-12 h-12 rounded-full border-2 transition-all ${
+                        activeThemeKey === key ? 'border-blue-500 scale-110 ring-2 ring-blue-500/50' : (isGlass ? 'border-white/20' : 'border-gray-200')
+                      } ${themeData[0]}`}
+                    ></button>
+                    <span className={`text-xs mt-2 text-center ${textLabel}`}>{themeData[2]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      );
+    };
+
+    // Component ទំព័រ Admin វត្តមាន
+    const AttendanceAdminPage = ({ 
+        schedules, 
+        attendanceRecords, 
+        onManualCheckIn, 
+        theme, 
+        loadingSchedules,
+        adminGroupFilter
+    }) => {
+      const [selectedDate, setSelectedDate] = useState_Component(getLocalDate());
+      const [modalInfo, setModalInfo] = useState_Component({
+        isOpen: false,
+        employee: null,
+        mode: null
+      });
+      // (ថ្មី) State សម្រាប់ Search
+      const [searchTerm, setSearchTerm] = useState_Component('');
+      
+      const isGlass = theme.bgClass.includes('gradient');
+      const textTitle = isGlass ? 'text-white' : 'text-gray-800';
+      const textHeader = isGlass ? 'text-blue-300' : 'text-blue-600';
+      const textLabel = isGlass ? 'text-gray-100' : 'text-gray-700';
+      const inputBg = isGlass ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-gray-300 text-gray-900';
+      const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-md';
+      const bgItem = isGlass ? 'bg-white/10' : 'bg-white';
+      const textName = isGlass ? 'text-white' : 'text-gray-800';
+      const textDept = isGlass ? 'text-gray-200' : 'text-gray-600';
+      const textId = isGlass ? 'text-purple-300' : 'text-purple-700';
+      const textShift = isGlass ? 'text-yellow-300' : 'text-yellow-700';
+
+      const { todayRecords, todayDate, shiftKey } = useMemo_Component(() => {
+        const date = new Date(selectedDate + 'T00:00:00');
+        const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        const todayDateStr = getLocalDate(date);
+        
+        const dayIndex = date.getDay(); // 0-Sun, 1-Mon...
+        const shiftKeys = ['SHIFT_SUN', 'SHIFT_MON', 'SHIFT_TUE', 'SHIFT_WED', 'SHIFT_THU', 'SHIFT_FRI', 'SHIFT_SAT'];
+        
+        const records = attendanceRecords.filter(r => r.dateId === todayDateStr);
+        return { 
+            todayRecords: records, 
+            todayDate: date, 
+            shiftKey: shiftKeys[dayIndex] // ឧ. 'SHIFT_TUE'
+        };
+      }, [attendanceRecords, selectedDate]);
+      
+      const missingStaff = useMemo_Component(() => {
+        if (loadingSchedules || Object.keys(schedules).length === 0) {
+          return [];
+        }
+        
+        const VALID_SHIFTS = [
+          "ពេញម៉ោង", "ពេលយប់", "ពេលព្រឹក", "ពេលរសៀល", "Uptime"
+        ];
+        
+        let scheduledToday = Object.values(schedules).filter(emp => {
+          // 1. ត្រងតាមក្រុម (Group Filter)
+          if (adminGroupFilter !== 'ALL' && emp['GROUP'] !== adminGroupFilter) {
+            return false;
+          }
+        
+          // 2. ត្រងតាមវេន (Shift Filter)
+          const shift = emp[shiftKey];
+          if (!shift || shift.trim() === '') return false;
+          
+          const upperShift = shift.trim().toUpperCase();
+          return VALID_SHIFTS.some(validShift => {
+            const upperValidShift = validShift.toUpperCase();
+            return upperShift === upperValidShift; 
+          });
+        });
+
+        const checkedInToday = new Set(
+          todayRecords.map(r => String(r.employeeId))
+        );
+        
+        let missing = scheduledToday.filter(emp => {
+          const empId = String(emp['ID']);
+          return !checkedInToday.has(empId);
+        });
+        
+        // (ថ្មី) 3. ត្រងតាមការស្វែងរក (Search Filter)
+        if (searchTerm.trim() !== '') {
+          const lowerSearchTerm = searchTerm.toLowerCase();
+          missing = missing.filter(emp => {
+            const name = emp['NAME'] ? emp['NAME'].toLowerCase() : '';
+            const id = emp['ID'] ? String(emp['ID']).toLowerCase() : '';
+            return name.includes(lowerSearchTerm) || id.includes(lowerSearchTerm);
+          });
+        }
+        
+        return missing;
+      }, [schedules, todayRecords, shiftKey, loadingSchedules, adminGroupFilter, searchTerm]); // (ថ្មី) បន្ថែម searchTerm
+
+      const formattedTitle = formatKhmerDate(selectedDate);
+      
+      const handleOpenModal = (employee, mode) => {
+        setModalInfo({ isOpen: true, employee, mode });
+      };
+      
+      const handleCloseModal = () => {
+        setModalInfo({ isOpen: false, employee: null, mode: null });
+      };
+
+      const handleSaveFromModal = async (data) => {
+        await onManualCheckIn(data);
+        handleCloseModal();
+      };
+      
+      const getEmployeeShift = (employee) => {
+          return employee[shiftKey] || 'N/A';
+      };
+
+      return (
+        <div className="p-4 space-y-6">
+          <h2 className={`text-center text-lg font-semibold ${textHeader}`}>
+            ត្រួតពិនិត្យវត្តមាន ({formattedTitle})
+          </h2>
+          
+          <div className="px-0">
+            <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+              ជ្រើសរើសកាលបរិច្ឆេទ
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg}`}
+            />
+          </div>
+          
+          {/* (ថ្មី) ប្រអប់ស្វែងរក */}
+          <div className="px-0">
+            <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+              ស្វែងរក (ឈ្មោះ ឬ ID)
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="វាយឈ្មោះ ឬ ID បុគ្គលិក..."
+              className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg}`}
+            />
+          </div>
+
+          {/* បញ្ជីបុគ្គលិកមិនទាន់ស្កេន */}
+          <div className={`rounded-xl overflow-hidden ${bgCard}`}>
+            <div className={`p-3 ${bgCard}`}>
+              <h3 className={`font-semibold ${textTitle}`}>
+                បុគ្គលិកមិនទាន់ស្កេន ({toKhmerNumber(missingStaff.length)})
+              </h3>
+            </div>
+            
+            <div className="space-y-2 p-2 max-h-96 overflow-y-auto custom-scrollbar">
+              {loadingSchedules ? (
+                <div className={`p-4 text-center ${textLabel}`}>កំពុងទាញកាលវិភាគ...</div>
+              ) : missingStaff.length === 0 ? (
+                <div className={`p-4 text-center ${textLabel}`}>
+                  មិនមានបុគ្គលិកដែលអវត្តមាន (ផ្អែកលើកាលវិភាគ) សម្រាប់ថ្ងៃនេះទេ។
+                </div>
+              ) : (
+                missingStaff.map((emp) => (
+                  <div key={emp['ID']} className={`flex items-center p-3 rounded-lg ${bgItem}`}>
+                    <img 
+                      src={emp['PHOTO'] || `https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`}
+                      onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`; }}
+                      className="w-10 h-10 rounded-full object-cover mr-3"
+                      alt={emp['NAME']}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-semibold truncate ${textName}`}>{emp['NAME']}</p>
+                      <p className={`text-sm ${textDept}`}>
+                        {emp['DEPT']} | <span className={`font-medium ${textId}`}>ID: {toKhmerNumber(emp['ID'])}</span>
+                      </p>
+                      <p className={`text-sm font-semibold ${textShift}`}>{getEmployeeShift(emp)}</p>
+                    </div>
+                    <div className="flex flex-col space-y-1 ml-2">
+                        <button
+                          onClick={() => handleOpenModal(emp, 'checkIn')}
+                          className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-md hover:bg-blue-600"
+                        >
+                          Check In
+                        </button>
+                        <button
+                          onClick={() => handleOpenModal(emp, 'checkOut')}
+                          className="px-3 py-1 bg-gray-500 text-white text-xs font-medium rounded-md hover:bg-gray-600"
+                        >
+                          Check Out
+                        </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          
+          {modalInfo.isOpen && (
+            <ManualEntryModal
+              employee={modalInfo.employee}
+              mode={modalInfo.mode}
+              dateId={selectedDate}
+              onSave={handleSaveFromModal}
+              onClose={handleCloseModal}
+              theme={theme}
+            />
+          )}
+          
+        </div>
+      );
+    };
+
+  </script>
   
-  <!-- 7. ផ្ទុក និងដំណើរការកូដ React គោល -->
-  <script type="text/babel" src="app.jsx"></script>
+  <!-- 
+    ================================================================
+    --- ផ្នែកទី ២: APP LOGIC (អតីត app.jsx) ---
+    ================================================================
+  -->
+  <script type="text/babel">
+    // --- ឯកសារគោល សម្រាប់ Logic របស់ App ---
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    // --- Firebase Config (ប្រើ Key ចាស់) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCgc3fq9mDHMCjTRRHD3BPBL31JkKZgXFc",
+      authDomain: "checkme-10e18.firebaseapp.com",
+      projectId: "checkme-10e18",
+      storageBucket: "checkme-10e18.firebasestorage.app",
+      messagingSenderId: "1030447497157",
+      appId: "1:1030447497157:web:9792086df1e864559fd5ac",
+      measurementId: "G-QCJ2JH4WH6"
+    };
+
+    // --- Google Sheet API Config (ប្រើ Key ថ្មី) ---
+    const GOOGLE_API_KEY = 'AIzaSyDX3DGMjYiuPlaiCDlk0KCm-0JQVcCwUJY';
+    const SHEET_ID = '1eRyPoifzyvB4oBmruNyXcoKMKPRqjk6xDD6-bPNW6pc';
+    const SHEET_NAME = 'DIList';
+    
+    // --- (កែប្រែ) Index ឱ្យត្រូវនឹង Column ពិត ---
+    const COL_INDEX = {
+        ID: 4,      // E: អត្តលេខ (Index 4)
+        GROUP: 6,   // G: ក្រុម (Index 6)
+        NAME: 11,   // L: ឈ្មោះ (Index 11)
+        GENDER: 13, // N: ភេទ (Index 13)
+        GRADE: 17,  // R: ថ្នាក់ (Index 17)
+        DEPT: 18,   // S: ផ្នែកការងារ (Index 18)
+        SHIFT_MON: 28, // AC: ចន្ទ (Index 28)
+        SHIFT_TUE: 29, // AD: អង្គារ៍ (Index 29)
+        SHIFT_WED: 30, // AE: ពុធ (Index 30)
+        SHIFT_THU: 31, // AF: ព្រហស្បត្តិ៍ (Index 31)
+        SHIFT_FRI: 32, // AG: សុក្រ (Index 32)
+        SHIFT_SAT: 33, // AH: សៅរ៍ (Index 33)
+        SHIFT_SUN: 34, // AI: អាទិត្យ (Index 34)
+        PHOTO: 35   // AJ: រូបថត (Index 35)
+    };
+
+
+    // --- ចាប់ផ្តើម Firebase (v8 style) ---
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+
+    // --- Component គោលរបស់កម្មវិធី ---
+    function App() {
+      
+      const useStickyState = (defaultValue, key) => {
+        const [value, setValue] = useState(() => {
+          const stickyValue = window.localStorage.getItem(key);
+          return stickyValue !== null
+            ? JSON.parse(stickyValue)
+            : defaultValue;
+        });
+        
+        useEffect(() => {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        }, [key, value]);
+        
+        return [value, setValue];
+      };
+
+      const [attendanceRecords, setAttendanceRecords] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [userId, setUserId] = useState(null);
+      
+      const [schedules, setSchedules] = useState({});
+      const [loadingSchedules, setLoadingSchedules] = useState(true);
+
+      const [activePage, setActivePage] = useStickyState('home', 'checkme_activePage');
+      const [activeThemeKey, setActiveThemeKey] = useStickyState('glass', 'checkme_activeThemeKey');
+      const [filterToday, setFilterToday] = useStickyState(false, 'checkme_filterToday');
+      const [filterIncomplete, setFilterIncomplete] = useStickyState(false, 'checkme_filterIncomplete');
+      const [filterIncompleteNotToday, setFilterIncompleteNotToday] = useStickyState(false, 'checkme_filterIncompleteNotToday');
+      const [entryMode, setEntryMode] = useStickyState(false, 'checkme_entryMode');
+      // (ថ្មី) State សម្រាប់ Admin Filter
+      const [adminGroupFilter, setAdminGroupFilter] = useStickyState('ALL', 'checkme_adminGroupFilter');
+      
+      const [editingRecord, setEditingRecord] = useState(null);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [touchStartX, setTouchStartX] = useState(null);
+      
+      const themeArray = themes[activeThemeKey] || themes['glass'];
+      const theme = {
+        key: activeThemeKey,
+        bgClass: themeArray[0],
+        textClass: themeArray[1],
+        name: themeArray[2]
+      };
+      
+      // (ថ្មី) ទាញបញ្ជីក្រុម ពី Schedules
+      const availableGroups = useMemo(() => {
+        const groups = new Set(Object.values(schedules).map(emp => emp['GROUP']));
+        return Array.from(groups).filter(Boolean).sort();
+      }, [schedules]);
+
+      useEffect(() => {
+        const setAppHeight = () => {
+          document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        };
+        window.addEventListener('resize', setAppHeight);
+        setAppHeight(); 
+        return () => window.removeEventListener('resize', setAppHeight);
+      }, []);
+
+      useEffect(() => {
+        const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+          if (user) {
+            setUserId(user.uid);
+          } else {
+            auth.signInAnonymously().catch((authError) => {
+              console.error("Error signing in anonymously:", authError);
+              setError("មិនអាចភ្ជាប់ទៅសេវាកម្មផ្ទៀងផ្ទាត់បានទេ។");
+              setLoading(false);
+            });
+          }
+        });
+        return () => unsubscribeAuth();
+      }, []);
+
+      // ប្រើ CollectionGroup
+      useEffect(() => {
+        if (!userId) return;
+
+        const allRecordsQuery = db.collectionGroup('records');
+        
+        setLoading(true);
+        setError(null);
+
+        const unsubscribeFirestore = allRecordsQuery.onSnapshot((querySnapshot) => {
+          const records = [];
+          
+          querySnapshot.forEach((doc) => {
+            const employeeId = doc.ref.parent.parent ? doc.ref.parent.parent.id : 'unknown';
+            records.push({ 
+              id: `${employeeId}-${doc.id}`,
+              employeeId: employeeId,
+              dateId: doc.id,
+              ...doc.data() 
+            });
+          });
+
+          records.sort((a, b) => b.dateId.localeCompare(a.dateId));
+          
+          setAttendanceRecords(records);
+          setLoading(false);
+        }, (firestoreError) => {
+          console.error("Error fetching Firestore data (CollectionGroup): ", firestoreError);
+          setError("ទាញទិន្នន័យ Firestore មិនជោគជ័យ។ (ប្រហែលត្រូវបង្កើត Index សម្រាប់ CollectionGroup 'records' ដោយតម្រៀបតាម dateId)");
+          setLoading(false);
+        });
+
+        return () => unsubscribeFirestore();
+      }, [userId]);
+      
+      // ទាញទិន្នន័យ Google Sheet
+      useEffect(() => {
+        const fetchSheetData = async () => {
+          const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_API_KEY}`;
+          try {
+            setLoadingSchedules(true);
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Google Sheet API Error: ${response.status} ${response.statusText}`);
+            }
+            const data = await response.json();
+            const rows = data.values || [];
+
+            if (rows.length < 2) {
+              throw new Error("Google Sheet មិនមានទិន្នន័យ ឬ Header");
+            }
+
+            const employeeData = {};
+
+            // ចាប់ផ្តើមពីជួរទី 5 (Index 4)
+            for (let i = 4; i < rows.length; i++) {
+              const row = rows[i];
+              const id = row[COL_INDEX.ID];
+              
+              if (id && id.trim() !== '') {
+                employeeData[id] = {
+                  ID: id,
+                  GROUP: row[COL_INDEX.GROUP],
+                  NAME: row[COL_INDEX.NAME],
+                  GENDER: row[COL_INDEX.GENDER],
+                  GRADE: row[COL_INDEX.GRADE],
+                  DEPT: row[COL_INDEX.DEPT],
+                  SHIFT_MON: row[COL_INDEX.SHIFT_MON],
+                  SHIFT_TUE: row[COL_INDEX.SHIFT_TUE],
+                  SHIFT_WED: row[COL_INDEX.SHIFT_WED],
+                  SHIFT_THU: row[COL_INDEX.SHIFT_THU],
+                  SHIFT_FRI: row[COL_INDEX.SHIFT_FRI],
+                  SHIFT_SAT: row[COL_INDEX.SHIFT_SAT],
+                  SHIFT_SUN: row[COL_INDEX.SHIFT_SUN],
+                  PHOTO: row[COL_INDEX.PHOTO]
+                };
+              }
+            }
+            setSchedules(employeeData);
+            
+          } catch (e) {
+            console.error("Error fetching Google Sheet data: ", e);
+            setError("ទាញទិន្នន័យកាលវិភាគមិនជោគជ័យ។ សូមពិនិត្យ Google Sheet API Key។");
+          } finally {
+            setLoadingSchedules(false);
+          }
+        };
+
+        fetchSheetData();
+      }, []);
+      
+      // Logic សម្រាប់ Filter (Mutually Exclusive)
+      const filteredRecords = useMemo(() => {
+        let records = attendanceRecords;
+        
+        if (filterToday) {
+          const today = getLocalDate();
+          records = records.filter(record => record.dateId === today);
+        } else if (filterIncomplete) {
+          records = records.filter(record => !record.checkIn || !record.checkOut);
+        } else if (filterIncompleteNotToday) {
+          const today = getLocalDate();
+          records = records.filter(record => (!record.checkIn || !record.checkOut) && record.dateId !== today);
+        }
+        
+        return records;
+      }, [attendanceRecords, filterToday, filterIncomplete, filterIncompleteNotToday]);
+      
+      useEffect(() => {
+        setCurrentPage(1);
+      }, [filterToday, filterIncomplete, filterIncompleteNotToday]);
+      
+      // Logic រក្សាទុកទិន្នន័យ (Save/Update/Manual)
+      const handleSaveRecord = async (updatedData) => {
+        const { employeeId, dateId, employeeName, department, ...dataToSave } = updatedData;
+        
+        if (!employeeId || !dateId) {
+          console.error("Missing Employee ID or Date ID");
+          return;
+        }
+
+        const recordDocRef = db.collection('attendance').doc(employeeId)
+                                .collection('records').doc(dateId);
+        
+        const recordData = {
+            ...dataToSave, // checkIn and/or checkOut
+        };
+        
+        if (employeeName) recordData.employeeName = employeeName;
+        if (department) recordData.department = department;
+
+        try {
+          await recordDocRef.set(recordData, { merge: true }); 
+          
+          console.log("Record updated/created successfully!");
+          setEditingRecord(null);
+        } catch (e) {
+          console.error("Error updating document: ", e);
+        }
+      };
+
+      const handleTouchStart = (e) => {
+        setTouchStartX(e.touches[0].clientX);
+      };
+
+      const handleTouchEnd = (e) => {
+        if (!touchStartX) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        const threshold = 50;
+        
+        if (activePage === 'home') {
+          const totalPages = Math.ceil(filteredRecords.length / 12);
+          
+          if (diffX > threshold) {
+            setCurrentPage(prev => Math.max(prev - 1, 1));
+          } else if (diffX < -threshold) {
+            setCurrentPage(prev => Math.min(prev + 1, totalPages));
+          }
+        }
+        setTouchStartX(null);
+      };
+
+      const getHeaderTitle = () => {
+        switch (activePage) {
+          case 'home':
+            return 'បញ្ជីវត្តមាន';
+          case 'admin':
+            return 'ពិនិត្យវត្តមាន';
+          case 'profile':
+            return 'គណនីរបស់ខ្ញុំ';
+          case 'report':
+            return 'របាយការណ៍';
+          case 'settings':
+            return 'ការកំណត់';
+          default:
+            return 'CheckMe App';
+        }
+      };
+      
+      const handlePageChange = (page) => {
+        setActivePage(page);
+      };
+      
+      const { bgClass, textClass } = theme;
+      const isGlass = bgClass.includes('gradient');
+      const headerBg = isGlass ? 'bg-white/10 backdrop-blur-lg' : 'bg-white shadow-lg';
+      const headerText = isGlass ? 'text-white' : 'text-gray-800';
+      const footerBg = isGlass ? 'bg-white/10 backdrop-blur-lg' : 'bg-white shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]';
+      const navText = isGlass ? 'text-gray-300' : 'text-gray-500';
+      const navTextActive = isGlass ? 'text-white' : 'text-blue-600';
+      const navBgActive = isGlass ? 'bg-white/20' : 'bg-blue-50';
+
+      return (
+        <div className={`w-full h-full min-h-screen ${bgClass}`} style={{ fontFamily: "'Kantumruy Pro', sans-serif" }}>
+          
+          <div className="w-full max-w-md mx-auto h-[var(--app-height)] shadow-2xl overflow-hidden flex flex-col">
+            
+            <header className={`flex-shrink-0 p-4 w-full z-10 transition-colors duration-300 ${headerBg}`}>
+              <h1 className={`text-xl font-bold text-center tracking-wide ${headerText}`}>{getHeaderTitle()}</h1>
+            </header>
+
+            <main 
+              className={`flex-1 overflow-y-auto custom-scrollbar ${textClass}`}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div key={activePage} className="page-content-animation">
+                {activePage === 'home' && (
+                  <AttendanceList 
+                    records={filteredRecords}
+                    loading={loading} 
+                    error={error}
+                    entryMode={entryMode}
+                    onRecordClick={(record) => setEditingRecord(record)}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    theme={theme}
+                  />
+                )}
+                {activePage === 'admin' && (
+                  <AttendanceAdminPage
+                    schedules={schedules}
+                    attendanceRecords={attendanceRecords}
+                    onManualCheckIn={handleSaveRecord} 
+                    theme={theme}
+                    loadingSchedules={loadingSchedules}
+                    adminGroupFilter={adminGroupFilter}
+                  />
+                )}
+                {activePage === 'profile' && <ProfilePage theme={theme} />}
+                {activePage === 'report' && <ReportPage records={attendanceRecords} theme={theme} />}
+                {activePage === 'settings' && (
+                  <SettingsPage
+                    filterToday={filterToday}
+                    setFilterToday={setFilterToday}
+                    filterIncomplete={filterIncomplete}
+                    setFilterIncomplete={setFilterIncomplete}
+                    filterIncompleteNotToday={filterIncompleteNotToday}
+                    setFilterIncompleteNotToday={setFilterIncompleteNotToday}
+                    entryMode={entryMode}
+                    setEntryMode={setEntryMode}
+                    activeThemeKey={activeThemeKey}
+                    onThemeChange={setActiveThemeKey}
+                    theme={theme}
+                    adminGroupFilter={adminGroupFilter}
+                    setAdminGroupFilter={setAdminGroupFilter}
+                    availableGroups={availableGroups}
+                  />
+                )}
+              </div>
+            </main>
+
+            <footer className={`flex-shrink-0 w-full flex justify-around items-center p-2 transition-colors duration-300 ${footerBg}`}>
+              <button
+                onClick={() => handlePageChange('home')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-16 h-16 transition-all duration-200 ${activePage === 'home' ? `${navTextActive} ${navBgActive} scale-105` : `${navText} hover:bg-gray-500/10`}`}
+                title="ទំព័រដើម"
+              >
+                <HomeIcon className="w-7 h-7" />
+              </button>
+              
+              <button
+                onClick={() => handlePageChange('admin')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-16 h-16 transition-all duration-200 ${activePage === 'admin' ? `${navTextActive} ${navBgActive} scale-105` : `${navText} hover:bg-gray-500/10`}`}
+                title="ពិនិត្យវត្តមាន"
+              >
+                <ClipboardListIcon className="w-7 h-7" />
+              </button>
+
+              <button
+                onClick={() => handlePageChange('profile')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-16 h-16 transition-all duration-200 ${activePage === 'profile' ? `${navTextActive} ${navBgActive} scale-105` : `${navText} hover:bg-gray-500/10`}`}
+                title="គណនី"
+              >
+                <UserIcon className="w-7 h-7" />
+              </button>
+
+              <button
+                onClick={() => handlePageChange('report')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-16 h-16 transition-all duration-200 ${activePage === 'report' ? `${navTextActive} ${navBgActive} scale-105` : `${navText} hover:bg-gray-500/10`}`}
+                title="របាយការណ៍"
+              >
+                <ChartBarIcon className="w-7 h-7" />
+              </button>
+
+              <button
+                onClick={() => handlePageChange('settings')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg w-16 h-16 transition-all duration-200 ${activePage === 'settings' ? `${navTextActive} ${navBgActive} scale-105` : `${navText} hover:bg-gray-500/10`}`}
+                title="កំណត់"
+              >
+                <SettingsIcon className="w-7 h-7" />
+              </button>
+            </footer>
+            
+            {editingRecord && (
+              <EditModal
+                record={editingRecord}
+                onSave={handleSaveRecord}
+                onClose={() => setEditingRecord(null)}
+                theme={theme}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Render កម្មវិធី
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+  </script>
   
 </body>
 </html>
