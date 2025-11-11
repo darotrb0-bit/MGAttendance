@@ -119,6 +119,11 @@
         <line x1="9" y1="14" x2="15" y2="14"></line>
       </svg>
     );
+    const BookmarkIcon = ({ className }) => (
+      <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
+    );
     const ChevronLeftIcon = ({ className, ...props }) => (
       <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="15 18 9 12 15 6"></polyline>
@@ -167,7 +172,6 @@
       return `${year}-${month}-${day}`;
     };
     
-    // (ថ្មី) យកម៉ោងបច្ចុប្បន្ន
     const getLocalTime = () => {
         return new Date().toLocaleTimeString('en-US', { 
             hour: '2-digit', 
@@ -231,7 +235,6 @@
       const handleSave = async () => {
         setIsSaving(true);
         try {
-          // (កែប្រែ) បញ្ជូនទិន្នន័យទាំងអស់ទៅ handleSaveRecord
           await onSave({
             ...record,
             checkIn: checkIn,
@@ -298,9 +301,8 @@
       );
     };
     
-    // --- (ថ្មី) Component សម្រាប់ Manual CheckIn/Out Modal (Admin) ---
+    // Component សម្រាប់ Manual CheckIn/Out Modal (Admin)
     const ManualEntryModal = ({ employee, mode, dateId, onSave, onClose, theme }) => {
-      // mode = 'checkIn' or 'checkOut'
       const [entryValue, setEntryValue] = useState_Component(getLocalTime());
       const [isSaving, setIsSaving] = useState_Component(false);
       
@@ -319,8 +321,9 @@
             employeeId: String(employee['ID']),
             employeeName: employee['NAME'],
             department: employee['DEPT'],
+            grade: employee['GRADE'],
             dateId: dateId,
-            [mode]: entryValue // 'checkIn': value or 'checkOut': value
+            [mode]: entryValue
           });
         } catch (error) {
           console.error("Error saving manual entry:", error);
@@ -501,7 +504,13 @@
                         <span className="text-sm font-mono font-medium">ID: {toKhmerNumber(record.employeeId)}</span>
                       </div>
                     </div>
-                    <div className={`flex items-center mt-1 ${textSubtitle}`}>
+                    {record.grade && (
+                        <div className={`flex items-center mt-1.5 ${textSubtitle}`}>
+                            <BookmarkIcon className="w-4 h-4 mr-2" />
+                            <span className="text-sm font-medium truncate">{record.grade}</span>
+                        </div>
+                    )}
+                    <div className={`flex items-center ${record.grade ? 'mt-1' : 'mt-1.5'} ${textSubtitle}`}>
                       <BuildingIcon className="w-4 h-4 mr-2" />
                       <span className="text-sm font-medium truncate">{record.department}</span>
                     </div>
@@ -729,19 +738,19 @@
       entryMode, setEntryMode,
       activeThemeKey, onThemeChange,
       theme,
-      // (ថ្មី) Props សម្រាប់ Admin Filter
-      adminGroupFilter, setAdminGroupFilter, availableGroups
+      // Props សម្រាប់ Admin Filter
+      adminGroupFilter, setAdminGroupFilter, availableGroups,
+      adminShiftFilter, setAdminShiftFilter, // (ថ្មី)
+      VALID_SHIFTS // (ថ្មី)
     }) => {
       
       const isGlass = theme.bgClass.includes('gradient');
       const textTitle = isGlass ? 'text-white' : 'text-gray-800';
       const bgCard = isGlass ? 'bg-white/10 backdrop-blur-md' : 'bg-white shadow-sm';
       const textLabel = isGlass ? 'text-gray-100' : 'text-gray-700';
-      // (ថ្មី) Style សម្រាប់ Dropdown
       const inputBg = isGlass ? 'bg-white/20 border-white/30 text-white' : 'bg-white border-gray-300 text-gray-900';
       const optionBg = isGlass ? 'bg-gray-800 text-white' : 'bg-white text-black';
       
-      // Logic សម្រាប់ Filter (Mutually Exclusive)
       const handleFilterChange = (setter, value) => {
         setFilterToday(setter === setFilterToday ? value : false);
         setFilterIncomplete(setter === setFilterIncomplete ? value : false);
@@ -776,10 +785,11 @@
             </div>
           </div>
           
-          {/* (ថ្មី) ផ្នែក Admin Filters */}
+          {/* (កែប្រែ) ផ្នែក Admin Filters */}
           <div>
             <h2 className={`text-xl font-semibold px-2 mb-2 pt-4 ${textTitle}`}>តម្រង (ទំព័រ Admin)</h2>
-            <div className={`p-4 rounded-xl space-y-3 ${bgCard}`}>
+            <div className={`p-4 rounded-xl space-y-4 ${bgCard}`}>
+              {/* Filter ក្រុម */}
               <div>
                 <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
                   ត្រងតាមក្រុម
@@ -792,6 +802,22 @@
                   <option value="ALL" className={optionBg}>-- គ្រប់ក្រុម --</option>
                   {availableGroups.map(group => (
                     <option key={group} value={group} className={optionBg}>{group}</option>
+                  ))}
+                </select>
+              </div>
+              {/* (ថ្មី) Filter វេន */}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+                  ត្រងតាមវេន
+                </label>
+                <select
+                  value={adminShiftFilter}
+                  onChange={(e) => setAdminShiftFilter(e.target.value)}
+                  className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg}`}
+                >
+                  <option value="ALL" className={optionBg}>-- គ្រប់វេន --</option>
+                  {VALID_SHIFTS.map(shift => (
+                    <option key={shift} value={shift} className={optionBg}>{shift}</option>
                   ))}
                 </select>
               </div>
@@ -837,14 +863,16 @@
       );
     };
 
-    // Component ទំព័រ Admin វត្តមាន
+    // (កែប្រែ) Component ទំព័រ Admin វត្តមាន
     const AttendanceAdminPage = ({ 
         schedules, 
         attendanceRecords, 
         onManualCheckIn, 
         theme, 
         loadingSchedules,
-        adminGroupFilter
+        adminGroupFilter,
+        adminShiftFilter, // (ថ្មី)
+        VALID_SHIFTS // (ថ្មី)
     }) => {
       const [selectedDate, setSelectedDate] = useState_Component(getLocalDate());
       const [modalInfo, setModalInfo] = useState_Component({
@@ -852,7 +880,6 @@
         employee: null,
         mode: null
       });
-      // (ថ្មី) State សម្រាប់ Search
       const [searchTerm, setSearchTerm] = useState_Component('');
       
       const isGlass = theme.bgClass.includes('gradient');
@@ -879,7 +906,7 @@
         return { 
             todayRecords: records, 
             todayDate: date, 
-            shiftKey: shiftKeys[dayIndex] // ឧ. 'SHIFT_TUE'
+            shiftKey: shiftKeys[dayIndex]
         };
       }, [attendanceRecords, selectedDate]);
       
@@ -887,22 +914,26 @@
         if (loadingSchedules || Object.keys(schedules).length === 0) {
           return [];
         }
-        
-        const VALID_SHIFTS = [
-          "ពេញម៉ោង", "ពេលយប់", "ពេលព្រឹក", "មួយរសៀល", "Uptime"
-        ];
-        
+
         let scheduledToday = Object.values(schedules).filter(emp => {
           // 1. ត្រងតាមក្រុម (Group Filter)
           if (adminGroupFilter !== 'ALL' && emp['GROUP'] !== adminGroupFilter) {
             return false;
           }
-        
-          // 2. ត្រងតាមវេន (Shift Filter)
+          
           const shift = emp[shiftKey];
           if (!shift || shift.trim() === '') return false;
-          
           const upperShift = shift.trim().toUpperCase();
+
+          // 2. ត្រងតាមវេន (Shift Filter)
+          if (adminShiftFilter !== 'ALL') {
+            // ត្រូវតែវេននោះពិតប្រាកដ
+            if (upperShift !== adminShiftFilter.toUpperCase()) {
+                return false;
+            }
+          }
+
+          // 3. ត្រងតាមវេនត្រឹមត្រូវ (Valid Shifts)
           return VALID_SHIFTS.some(validShift => {
             const upperValidShift = validShift.toUpperCase();
             return upperShift === upperValidShift; 
@@ -918,7 +949,7 @@
           return !checkedInToday.has(empId);
         });
         
-        // (ថ្មី) 3. ត្រងតាមការស្វែងរក (Search Filter)
+        // 4. ត្រងតាមការស្វែងរក (Search Filter)
         if (searchTerm.trim() !== '') {
           const lowerSearchTerm = searchTerm.toLowerCase();
           missing = missing.filter(emp => {
@@ -929,7 +960,7 @@
         }
         
         return missing;
-      }, [schedules, todayRecords, shiftKey, loadingSchedules, adminGroupFilter, searchTerm]); // (ថ្មី) បន្ថែម searchTerm
+      }, [schedules, todayRecords, shiftKey, loadingSchedules, adminGroupFilter, adminShiftFilter, searchTerm, VALID_SHIFTS]); // (កែប្រែ)
 
       const formattedTitle = formatKhmerDate(selectedDate);
       
@@ -968,7 +999,6 @@
             />
           </div>
           
-          {/* (ថ្មី) ប្រអប់ស្វែងរក */}
           <div className="px-0">
             <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
               ស្វែងរក (ឈ្មោះ ឬ ID)
@@ -982,7 +1012,6 @@
             />
           </div>
 
-          {/* បញ្ជីបុគ្គលិកមិនទាន់ស្កេន */}
           <div className={`rounded-xl overflow-hidden ${bgCard}`}>
             <div className={`p-3 ${bgCard}`}>
               <h3 className={`font-semibold ${textTitle}`}>
@@ -995,7 +1024,7 @@
                 <div className={`p-4 text-center ${textLabel}`}>កំពុងទាញកាលវិភាគ...</div>
               ) : missingStaff.length === 0 ? (
                 <div className={`p-4 text-center ${textLabel}`}>
-                  មិនមានបុគ្គលិកដែលអវត្តមាន (ផ្អែកលើកាលវិភាគ) សម្រាប់ថ្ងៃនេះទេ។
+                  មិនមានបុគ្គលិកដែលអវត្តមាន (ផ្អែកលើតម្រង) សម្រាប់ថ្ងៃនេះទេ។
                 </div>
               ) : (
                 missingStaff.map((emp) => (
@@ -1009,7 +1038,7 @@
                     <div className="flex-1 min-w-0">
                       <p className={`font-semibold truncate ${textName}`}>{emp['NAME']}</p>
                       <p className={`text-sm ${textDept}`}>
-                        {emp['DEPT']} | <span className={`font-medium ${textId}`}>ID: {toKhmerNumber(emp['ID'])}</span>
+                        {emp['GRADE'] && `${emp['GRADE']} | `}{emp['DEPT']} | <span className={`font-medium ${textId}`}>ID: {toKhmerNumber(emp['ID'])}</span>
                       </p>
                       <p className={`text-sm font-semibold ${textShift}`}>{getEmployeeShift(emp)}</p>
                     </div>
@@ -1075,7 +1104,6 @@
     const SHEET_ID = '1eRyPoifzyvB4oBmruNyXcoKMKPRqjk6xDD6-bPNW6pc';
     const SHEET_NAME = 'DIList';
     
-    // --- (កែប្រែ) Index ឱ្យត្រូវនឹង Column ពិត ---
     const COL_INDEX = {
         ID: 4,      // E: អត្តលេខ (Index 4)
         GROUP: 6,   // G: ក្រុម (Index 6)
@@ -1092,6 +1120,11 @@
         SHIFT_SUN: 34, // AI: អាទិត្យ (Index 34)
         PHOTO: 35   // AJ: រូបថត (Index 35)
     };
+    
+    // (ថ្មី) វេនធ្វើការ
+    const VALID_SHIFTS = [
+      "ពេញម៉ោង", "ពេលយប់", "ពេលព្រឹក", "មួយរសៀល", "Uptime"
+    ];
 
 
     // --- ចាប់ផ្តើម Firebase (v8 style) ---
@@ -1134,8 +1167,9 @@
       const [filterIncomplete, setFilterIncomplete] = useStickyState(false, 'checkme_filterIncomplete');
       const [filterIncompleteNotToday, setFilterIncompleteNotToday] = useStickyState(false, 'checkme_filterIncompleteNotToday');
       const [entryMode, setEntryMode] = useStickyState(false, 'checkme_entryMode');
-      // (ថ្មី) State សម្រាប់ Admin Filter
+      
       const [adminGroupFilter, setAdminGroupFilter] = useStickyState('ALL', 'checkme_adminGroupFilter');
+      const [adminShiftFilter, setAdminShiftFilter] = useStickyState('ALL', 'checkme_adminShiftFilter'); // (ថ្មី)
       
       const [editingRecord, setEditingRecord] = useState(null);
       const [currentPage, setCurrentPage] = useState(1);
@@ -1149,7 +1183,6 @@
         name: themeArray[2]
       };
       
-      // (ថ្មី) ទាញបញ្ជីក្រុម ពី Schedules
       const availableGroups = useMemo(() => {
         const groups = new Set(Object.values(schedules).map(emp => emp['GROUP']));
         return Array.from(groups).filter(Boolean).sort();
@@ -1179,18 +1212,14 @@
         return () => unsubscribeAuth();
       }, []);
 
-      // ប្រើ CollectionGroup
       useEffect(() => {
         if (!userId) return;
-
         const allRecordsQuery = db.collectionGroup('records');
-        
         setLoading(true);
         setError(null);
 
         const unsubscribeFirestore = allRecordsQuery.onSnapshot((querySnapshot) => {
           const records = [];
-          
           querySnapshot.forEach((doc) => {
             const employeeId = doc.ref.parent.parent ? doc.ref.parent.parent.id : 'unknown';
             records.push({ 
@@ -1200,9 +1229,7 @@
               ...doc.data() 
             });
           });
-
           records.sort((a, b) => b.dateId.localeCompare(a.dateId));
-          
           setAttendanceRecords(records);
           setLoading(false);
         }, (firestoreError) => {
@@ -1214,7 +1241,6 @@
         return () => unsubscribeFirestore();
       }, [userId]);
       
-      // ទាញទិន្នន័យ Google Sheet
       useEffect(() => {
         const fetchSheetData = async () => {
           const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_API_KEY}`;
@@ -1230,10 +1256,7 @@
             if (rows.length < 2) {
               throw new Error("Google Sheet មិនមានទិន្នន័យ ឬ Header");
             }
-
             const employeeData = {};
-
-            // ចាប់ផ្តើមពីជួរទី 5 (Index 4)
             for (let i = 4; i < rows.length; i++) {
               const row = rows[i];
               const id = row[COL_INDEX.ID];
@@ -1258,7 +1281,6 @@
               }
             }
             setSchedules(employeeData);
-            
           } catch (e) {
             console.error("Error fetching Google Sheet data: ", e);
             setError("ទាញទិន្នន័យកាលវិភាគមិនជោគជ័យ។ សូមពិនិត្យ Google Sheet API Key។");
@@ -1266,14 +1288,11 @@
             setLoadingSchedules(false);
           }
         };
-
         fetchSheetData();
       }, []);
       
-      // Logic សម្រាប់ Filter (Mutually Exclusive)
       const filteredRecords = useMemo(() => {
         let records = attendanceRecords;
-        
         if (filterToday) {
           const today = getLocalDate();
           records = records.filter(record => record.dateId === today);
@@ -1283,7 +1302,6 @@
           const today = getLocalDate();
           records = records.filter(record => (!record.checkIn || !record.checkOut) && record.dateId !== today);
         }
-        
         return records;
       }, [attendanceRecords, filterToday, filterIncomplete, filterIncompleteNotToday]);
       
@@ -1291,28 +1309,23 @@
         setCurrentPage(1);
       }, [filterToday, filterIncomplete, filterIncompleteNotToday]);
       
-      // Logic រក្សាទុកទិន្នន័យ (Save/Update/Manual)
       const handleSaveRecord = async (updatedData) => {
-        const { employeeId, dateId, employeeName, department, ...dataToSave } = updatedData;
+        const { employeeId, dateId, employeeName, department, grade, ...dataToSave } = updatedData;
         
         if (!employeeId || !dateId) {
           console.error("Missing Employee ID or Date ID");
           return;
         }
-
         const recordDocRef = db.collection('attendance').doc(employeeId)
                                 .collection('records').doc(dateId);
-        
-        const recordData = {
-            ...dataToSave, // checkIn and/or checkOut
-        };
+        const recordData = { ...dataToSave };
         
         if (employeeName) recordData.employeeName = employeeName;
         if (department) recordData.department = department;
+        if (grade) recordData.grade = grade;
 
         try {
           await recordDocRef.set(recordData, { merge: true }); 
-          
           console.log("Record updated/created successfully!");
           setEditingRecord(null);
         } catch (e) {
@@ -1326,14 +1339,12 @@
 
       const handleTouchEnd = (e) => {
         if (!touchStartX) return;
-        
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchEndX - touchStartX;
         const threshold = 50;
         
         if (activePage === 'home') {
           const totalPages = Math.ceil(filteredRecords.length / 12);
-          
           if (diffX > threshold) {
             setCurrentPage(prev => Math.max(prev - 1, 1));
           } else if (diffX < -threshold) {
@@ -1408,6 +1419,8 @@
                     theme={theme}
                     loadingSchedules={loadingSchedules}
                     adminGroupFilter={adminGroupFilter}
+                    adminShiftFilter={adminShiftFilter}
+                    VALID_SHIFTS={VALID_SHIFTS}
                   />
                 )}
                 {activePage === 'profile' && <ProfilePage theme={theme} />}
@@ -1428,6 +1441,9 @@
                     adminGroupFilter={adminGroupFilter}
                     setAdminGroupFilter={setAdminGroupFilter}
                     availableGroups={availableGroups}
+                    adminShiftFilter={adminShiftFilter}
+                    setAdminShiftFilter={setAdminShiftFilter}
+                    VALID_SHIFTS={VALID_SHIFTS}
                   />
                 )}
               </div>
