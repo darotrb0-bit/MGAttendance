@@ -63,6 +63,17 @@
     .custom-scrollbar::-webkit-scrollbar-track {
       background: transparent;
     }
+    
+    /* Fix ចំពោះ Date Input Picker Icon ក្នុង Dark Mode */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.8); /* Invert icon color for visibility on dark backgrounds */
+    }
+    .dark-theme input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.8);
+    }
+    .glass-theme input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1); /* Make it white for glass theme */
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -150,17 +161,17 @@
 
     // --- ២. ផ្ទុក Themes ---
     const themes = {
-      glass: ['bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400', 'text-white', 'កញ្ចក់ (ដើម)'],
+      glass: ['bg-gradient-to-br from-purple-600 via-blue-500 to-cyan-400 glass-theme', 'text-white', 'កញ្ចក់ (ដើម)'],
       light: ['bg-gray-100', 'text-gray-800', 'ភ្លឺ (Light)'],
-      dark: ['bg-gray-900', 'text-gray-100', 'ងងឹត (Dark)'],
-      slate: ['bg-slate-800', 'text-slate-100', 'ងងឹត (Slate)'],
-      sky: ['bg-sky-600', 'text-white', 'មេឃ (Sky)'],
+      dark: ['bg-gray-900 dark-theme', 'text-gray-100', 'ងងឹត (Dark)'],
+      slate: ['bg-slate-800 dark-theme', 'text-slate-100', 'ងងឹត (Slate)'],
+      sky: ['bg-sky-600 glass-theme', 'text-white', 'មេឃ (Sky)'],
       solarizedLight: ['bg-yellow-50', 'text-yellow-900', 'Solarized (ភ្លឺ)'],
-      solarizedDark: ['bg-neutral-900', 'text-neutral-100', 'Solarized (ងងឹត)'],
+      solarizedDark: ['bg-neutral-900 dark-theme', 'text-neutral-100', 'Solarized (ងងឹត)'],
       strawberry: ['bg-pink-100', 'text-pink-800', 'Strawberry'],
-      emerald: ['bg-emerald-700', 'text-white', 'ត្បូង (Emerald)'],
-      royal: ['bg-indigo-800', 'text-indigo-100', 'រាជ (Royal)'],
-      hotpink: ['bg-pink-500', 'text-white', 'ផ្កាឈូក (ខ្លាំង)'],
+      emerald: ['bg-emerald-700 glass-theme', 'text-white', 'ត្បូង (Emerald)'],
+      royal: ['bg-indigo-800 glass-theme', 'text-indigo-100', 'រាជ (Royal)'],
+      hotpink: ['bg-pink-500 glass-theme', 'text-white', 'ផ្កាឈូក (ខ្លាំង)'],
       white: ['bg-white', 'text-black', 'ស (White)'],
     };
 
@@ -170,6 +181,21 @@
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
+    };
+    
+    // (ថ្មី) Function សម្រាប់ Format Date (03-Nov-2025)
+    const formatEnglishDate = (dateString) => {
+        if (!dateString) return "";
+        try {
+            const date = new Date(dateString + 'T00:00:00');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = date.toLocaleString('en-US', { month: 'short' });
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        } catch (e) {
+            console.error("Error formatting English date:", e);
+            return dateString;
+        }
     };
     
     const getLocalTime = () => {
@@ -218,7 +244,7 @@
 
     // --- ៤. Components សម្រាប់ UI ---
 
-    // Component សម្រាប់ Edit Modal
+    // Component សម្រាប់ Edit Modal (ទំព័រ Home)
     const EditModal = ({ record, onSave, onClose, theme }) => {
       const [checkIn, setCheckIn] = useState_Component(record.checkIn || '');
       const [checkOut, setCheckOut] = useState_Component(record.checkOut || '');
@@ -235,11 +261,12 @@
       const handleSave = async () => {
         setIsSaving(true);
         try {
+          // រក្សាទុកតែ checkIn/checkOut ប៉ុណ្ណោះ (រក្សាទិន្នន័យចាស់)
           await onSave({
             ...record,
             checkIn: checkIn,
             checkOut: checkOut,
-          });
+          }, false); // false = មិនមែន Admin Entry
         } catch (error) {
           console.error("Error saving record:", error);
         } finally {
@@ -301,9 +328,11 @@
       );
     };
     
-    // Component សម្រាប់ Manual CheckIn/Out Modal (Admin)
-    const ManualEntryModal = ({ employee, mode, dateId, onSave, onClose, theme }) => {
-      const [entryValue, setEntryValue] = useState_Component(getLocalTime());
+    // (កែប្រែ) Component សម្រាប់ Manual CheckIn/Out Modal (Admin)
+    const ManualEntryModal = ({ employee, existingRecord, dateId, shift, onSave, onClose, theme }) => {
+      // ប្រើទិន្នន័យចាស់ (បើមាន) ឬ ""
+      const [checkIn, setCheckIn] = useState_Component(existingRecord.checkIn || '');
+      const [checkOut, setCheckOut] = useState_Component(existingRecord.checkOut || '');
       const [isSaving, setIsSaving] = useState_Component(false);
       
       const isGlass = theme.bgClass.includes('gradient');
@@ -317,14 +346,25 @@
       const handleSave = async () => {
         setIsSaving(true);
         try {
+          const formattedDate = formatEnglishDate(dateId);
+          
           await onSave({
+            // ទិន្នន័យសម្រាប់ Firebase Record
             employeeId: String(employee['ID']),
+            dateId: dateId,
+            checkIn: checkIn,
+            checkOut: checkOut,
+            
+            // ទិន្នន័យបន្ថែម (Full Info)
             employeeName: employee['NAME'],
             department: employee['DEPT'],
             grade: employee['GRADE'],
-            dateId: dateId,
-            [mode]: entryValue
-          });
+            gender: employee['GENDER'],
+            group: employee['GROUP'],
+            shift: shift,
+            date: dateId, // រក្សាទុក YYYY-MM-DD
+            formattedDate: formattedDate, // រក្សាទុក DD-Mon-YYYY
+          }, true); // true = Admin Entry
         } catch (error) {
           console.error("Error saving manual entry:", error);
         } finally {
@@ -333,7 +373,7 @@
         }
       };
       
-      const title = mode === 'checkIn' ? 'ចុះវត្តមាន (Check In)' : 'ចុះវត្តមាន (Check Out)';
+      const title = 'ចុះវត្តមានដោយដៃ (Admin)';
       const placeholder = 'ឧទា: 08:00 AM ឬ សុំច្បាប់';
 
       return (
@@ -343,17 +383,30 @@
             <div className={`mb-4 p-3 rounded-lg ${infoBg}`}>
               <p className={`font-semibold ${textTitle}`}>{employee['NAME']}</p>
               <p className={`text-sm ${textLabel}`}>ID: {toKhmerNumber(employee['ID'])} | {formatKhmerDate(dateId)}</p>
+              <p className={`text-sm ${textLabel} font-medium`}>វេន: {shift}</p>
             </div>
             
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
-                  {mode === 'checkIn' ? 'ម៉ោងចូល ឬ មូលហេតុ' : 'ម៉ោងចេញ ឬ មូលហេតុ'}
+                  Check In (ម៉ោងចូល ឬ មូលហេតុ)
                 </label>
                 <input
                   type="text"
-                  value={entryValue}
-                  onChange={(e) => setEntryValue(e.target.value)}
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg} ${textInput}`}
+                  placeholder={placeholder}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
+                  Check Out (ម៉ោងចេញ ឬ មូលហេតុ)
+                </label>
+                <input
+                  type="text"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 ${inputBg} ${textInput}`}
                   placeholder={placeholder}
                 />
@@ -530,7 +583,7 @@
                         <p className={`font-bold text-lg ${textGreen}`}>{toKhmerNumber(record.checkIn)}</p>
                       ) : (
                         <p className={`font-bold text-base ${textRed}`}>
-                          {checkEntryType(record.checkIn) === 'LEAVE' ? 'សុំច្បាប់' : 'អវត្តមាន'}
+                          {checkEntryType(record.checkIn) === 'LEAVE' ? (record.checkIn || 'សុំច្បាប់') : 'អវត្តមាន'}
                         </p>
                       )}
                     </div>
@@ -545,7 +598,7 @@
                         <p className={`font-bold text-lg ${textRedTime}`}>{toKhmerNumber(record.checkOut)}</p>
                       ) : (
                         <p className={`font-bold text-base ${checkEntryType(record.checkIn) === 'TIME' ? textMuted : textRed}`}>
-                          {checkEntryType(record.checkOut) === 'LEAVE' ? 'សុំច្បាប់' : 'អវត្តមាន'}
+                          {checkEntryType(record.checkOut) === 'LEAVE' ? (record.checkOut || 'សុំច្បាប់') : 'អវត្តមាន'}
                         </p>
                       )}
                     </div>
@@ -740,8 +793,8 @@
       theme,
       // Props សម្រាប់ Admin Filter
       adminGroupFilter, setAdminGroupFilter, availableGroups,
-      adminShiftFilter, setAdminShiftFilter, // (ថ្មី)
-      VALID_SHIFTS // (ថ្មី)
+      adminShiftFilter, setAdminShiftFilter, 
+      VALID_SHIFTS
     }) => {
       
       const isGlass = theme.bgClass.includes('gradient');
@@ -785,7 +838,7 @@
             </div>
           </div>
           
-          {/* (កែប្រែ) ផ្នែក Admin Filters */}
+          {/* ផ្នែក Admin Filters */}
           <div>
             <h2 className={`text-xl font-semibold px-2 mb-2 pt-4 ${textTitle}`}>តម្រង (ទំព័រ Admin)</h2>
             <div className={`p-4 rounded-xl space-y-4 ${bgCard}`}>
@@ -805,7 +858,7 @@
                   ))}
                 </select>
               </div>
-              {/* (ថ្មី) Filter វេន */}
+              {/* Filter វេន */}
               <div>
                 <label className={`block text-sm font-medium mb-1 ${textLabel}`}>
                   ត្រងតាមវេន
@@ -871,14 +924,15 @@
         theme, 
         loadingSchedules,
         adminGroupFilter,
-        adminShiftFilter, // (ថ្មី)
-        VALID_SHIFTS // (ថ្មី)
+        adminShiftFilter, 
+        VALID_SHIFTS
     }) => {
       const [selectedDate, setSelectedDate] = useState_Component(getLocalDate());
       const [modalInfo, setModalInfo] = useState_Component({
         isOpen: false,
         employee: null,
-        mode: null
+        shift: null,
+        existingRecord: {}
       });
       const [searchTerm, setSearchTerm] = useState_Component('');
       
@@ -894,7 +948,8 @@
       const textId = isGlass ? 'text-purple-300' : 'text-purple-700';
       const textShift = isGlass ? 'text-yellow-300' : 'text-yellow-700';
 
-      const { todayRecords, todayDate, shiftKey } = useMemo_Component(() => {
+      // ស្វែងរកទិន្នន័យក្នុង Firebase តាមថ្ងៃ
+      const { todayRecordsMap, todayDate, shiftKey } = useMemo_Component(() => {
         const date = new Date(selectedDate + 'T00:00:00');
         const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
         const todayDateStr = getLocalDate(date);
@@ -902,15 +957,27 @@
         const dayIndex = date.getDay(); // 0-Sun, 1-Mon...
         const shiftKeys = ['SHIFT_SUN', 'SHIFT_MON', 'SHIFT_TUE', 'SHIFT_WED', 'SHIFT_THU', 'SHIFT_FRI', 'SHIFT_SAT'];
         
-        const records = attendanceRecords.filter(r => r.dateId === todayDateStr);
+        // បំប្លែង Array ទៅជា Map ដើម្បីងាយស្រួលរក
+        const recordsMap = new Map();
+        attendanceRecords.forEach(r => {
+            if (r.dateId === todayDateStr) {
+                recordsMap.set(String(r.employeeId), r);
+            }
+        });
+        
         return { 
-            todayRecords: records, 
+            todayRecordsMap: recordsMap, 
             todayDate: date, 
             shiftKey: shiftKeys[dayIndex]
         };
       }, [attendanceRecords, selectedDate]);
       
-      const missingStaff = useMemo_Component(() => {
+      const getEmployeeShift = (employee) => {
+          return employee[shiftKey] || 'N/A';
+      };
+      
+      // បញ្ជីបុគ្គលិកដែលត្រូវធ្វើការ (ផ្អែកលើ Filter)
+      const scheduledStaff = useMemo_Component(() => {
         if (loadingSchedules || Object.keys(schedules).length === 0) {
           return [];
         }
@@ -921,13 +988,12 @@
             return false;
           }
           
-          const shift = emp[shiftKey];
+          const shift = getEmployeeShift(emp);
           if (!shift || shift.trim() === '') return false;
           const upperShift = shift.trim().toUpperCase();
 
           // 2. ត្រងតាមវេន (Shift Filter)
           if (adminShiftFilter !== 'ALL') {
-            // ត្រូវតែវេននោះពិតប្រាកដ
             if (upperShift !== adminShiftFilter.toUpperCase()) {
                 return false;
             }
@@ -939,46 +1005,58 @@
             return upperShift === upperValidShift; 
           });
         });
-
-        const checkedInToday = new Set(
-          todayRecords.map(r => String(r.employeeId))
-        );
-        
-        let missing = scheduledToday.filter(emp => {
-          const empId = String(emp['ID']);
-          return !checkedInToday.has(empId);
-        });
         
         // 4. ត្រងតាមការស្វែងរក (Search Filter)
         if (searchTerm.trim() !== '') {
           const lowerSearchTerm = searchTerm.toLowerCase();
-          missing = missing.filter(emp => {
+          // (FIX) កែ scheduledStaff ទៅ scheduledToday
+          scheduledToday = scheduledToday.filter(emp => { 
             const name = emp['NAME'] ? emp['NAME'].toLowerCase() : '';
             const id = emp['ID'] ? String(emp['ID']).toLowerCase() : '';
             return name.includes(lowerSearchTerm) || id.includes(lowerSearchTerm);
           });
         }
         
-        return missing;
-      }, [schedules, todayRecords, shiftKey, loadingSchedules, adminGroupFilter, adminShiftFilter, searchTerm, VALID_SHIFTS]); // (កែប្រែ)
+        // 5. តម្រៀបតាមឈ្មោះ
+        // (FIX) កែ scheduledStaff ទៅ scheduledToday
+        scheduledToday.sort((a, b) => (a['NAME'] || '').localeCompare(b['NAME'] || '')); 
+        
+        // (FIX) កែ scheduledStaff ទៅ scheduledToday
+        return scheduledToday; 
+      }, [schedules, shiftKey, loadingSchedules, adminGroupFilter, adminShiftFilter, searchTerm, VALID_SHIFTS]); // (កែប្រែ)
 
       const formattedTitle = formatKhmerDate(selectedDate);
       
-      const handleOpenModal = (employee, mode) => {
-        setModalInfo({ isOpen: true, employee, mode });
+      const handleOpenModal = (employee) => {
+        const empId = String(employee['ID']);
+        const existingRecord = todayRecordsMap.get(empId) || {};
+        const shift = getEmployeeShift(employee);
+        
+        setModalInfo({ isOpen: true, employee, shift, existingRecord });
       };
       
       const handleCloseModal = () => {
-        setModalInfo({ isOpen: false, employee: null, mode: null });
+        setModalInfo({ isOpen: false, employee: null, shift: null, existingRecord: {} });
       };
 
       const handleSaveFromModal = async (data) => {
-        await onManualCheckIn(data);
+        await onManualCheckIn(data, true); // true = Admin Entry
         handleCloseModal();
       };
       
-      const getEmployeeShift = (employee) => {
-          return employee[shiftKey] || 'N/A';
+      // (កែប្រែ) Function សម្រាប់បង្ហាញប៊ូតុង
+      const getButtonState = (empId) => {
+          const record = todayRecordsMap.get(String(empId));
+          const hasCheckIn = record && checkEntryType(record.checkIn) !== 'EMPTY';
+          const hasCheckOut = record && checkEntryType(record.checkOut) !== 'EMPTY';
+          
+          if (hasCheckIn && hasCheckOut) {
+              return { label: 'កែប្រែ', class: 'bg-green-600 hover:bg-green-700' };
+          }
+          if (hasCheckIn) {
+              return { label: 'Check Out', class: 'bg-yellow-600 hover:bg-yellow-700' };
+          }
+          return { label: 'Check In', class: 'bg-blue-500 hover:bg-blue-600' };
       };
 
       return (
@@ -1015,49 +1093,46 @@
           <div className={`rounded-xl overflow-hidden ${bgCard}`}>
             <div className={`p-3 ${bgCard}`}>
               <h3 className={`font-semibold ${textTitle}`}>
-                បុគ្គលិកមិនទាន់ស្កេន ({toKhmerNumber(missingStaff.length)})
+                បុគ្គលិកត្រូវវេន ({toKhmerNumber(scheduledStaff.length)})
               </h3>
             </div>
             
-            <div className="space-y-2 p-2 max-h-96 overflow-y-auto custom-scrollbar">
+            <div className="space-y-2 p-2 max-h-[30rem] overflow-y-auto custom-scrollbar">
               {loadingSchedules ? (
                 <div className={`p-4 text-center ${textLabel}`}>កំពុងទាញកាលវិភាគ...</div>
-              ) : missingStaff.length === 0 ? (
+              ) : scheduledStaff.length === 0 ? (
                 <div className={`p-4 text-center ${textLabel}`}>
-                  មិនមានបុគ្គលិកដែលអវត្តមាន (ផ្អែកលើតម្រង) សម្រាប់ថ្ងៃនេះទេ។
+                  មិនមានបុគ្គលិកដែលត្រូវវេន (ផ្អែកលើតម្រង) សម្រាប់ថ្ងៃនេះទេ។
                 </div>
               ) : (
-                missingStaff.map((emp) => (
-                  <div key={emp['ID']} className={`flex items-center p-3 rounded-lg ${bgItem}`}>
-                    <img 
-                      src={emp['PHOTO'] || `https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`}
-                      onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`; }}
-                      className="w-10 h-10 rounded-full object-cover mr-3"
-                      alt={emp['NAME']}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-semibold truncate ${textName}`}>{emp['NAME']}</p>
-                      <p className={`text-sm ${textDept}`}>
-                        {emp['GRADE'] && `${emp['GRADE']} | `}{emp['DEPT']} | <span className={`font-medium ${textId}`}>ID: {toKhmerNumber(emp['ID'])}</span>
-                      </p>
-                      <p className={`text-sm font-semibold ${textShift}`}>{getEmployeeShift(emp)}</p>
-                    </div>
-                    <div className="flex flex-col space-y-1 ml-2">
-                        <button
-                          onClick={() => handleOpenModal(emp, 'checkIn')}
-                          className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-md hover:bg-blue-600"
-                        >
-                          Check In
-                        </button>
-                        <button
-                          onClick={() => handleOpenModal(emp, 'checkOut')}
-                          className="px-3 py-1 bg-gray-500 text-white text-xs font-medium rounded-md hover:bg-gray-600"
-                        >
-                          Check Out
-                        </button>
-                    </div>
-                  </div>
-                ))
+                scheduledStaff.map((emp) => {
+                  const buttonState = getButtonState(emp['ID']);
+                  return (
+                      <div key={emp['ID']} className={`flex items-center p-3 rounded-lg ${bgItem}`}>
+                        <img 
+                          src={emp['PHOTO'] || `https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`}
+                          onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/40x40/E2E8F0/A0AEC0?text=${emp['NAME'] ? emp['NAME'][0] : 'P'}`; }}
+                          className="w-10 h-10 rounded-full object-cover mr-3"
+                          alt={emp['NAME']}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold truncate ${textName}`}>{emp['NAME']}</p>
+                          <p className={`text-sm ${textDept}`}>
+                            {emp['GRADE'] && `${emp['GRADE']} | `}{emp['DEPT']} | <span className={`font-medium ${textId}`}>ID: {toKhmerNumber(emp['ID'])}</span>
+                          </p>
+                          <p className={`text-sm font-semibold ${textShift}`}>{getEmployeeShift(emp)}</p>
+                        </div>
+                        <div className="flex flex-col space-y-1 ml-2">
+                            <button
+                              onClick={() => handleOpenModal(emp)}
+                              className={`px-3 py-2 text-white text-xs font-medium rounded-md w-20 ${buttonState.class}`}
+                            >
+                              {buttonState.label}
+                            </button>
+                        </div>
+                      </div>
+                  )
+                })
               )}
             </div>
           </div>
@@ -1065,8 +1140,9 @@
           {modalInfo.isOpen && (
             <ManualEntryModal
               employee={modalInfo.employee}
-              mode={modalInfo.mode}
+              existingRecord={modalInfo.existingRecord}
               dateId={selectedDate}
+              shift={modalInfo.shift}
               onSave={handleSaveFromModal}
               onClose={handleCloseModal}
               theme={theme}
@@ -1104,6 +1180,7 @@
     const SHEET_ID = '1eRyPoifzyvB4oBmruNyXcoKMKPRqjk6xDD6-bPNW6pc';
     const SHEET_NAME = 'DIList';
     
+    // (កែតម្រូវ) Column Index ឱ្យត្រូវ
     const COL_INDEX = {
         ID: 4,      // E: អត្តលេខ (Index 4)
         GROUP: 6,   // G: ក្រុម (Index 6)
@@ -1121,7 +1198,7 @@
         PHOTO: 35   // AJ: រូបថត (Index 35)
     };
     
-    // (ថ្មី) វេនធ្វើការ
+    // វេនធ្វើការ
     const VALID_SHIFTS = [
       "ពេញម៉ោង", "ពេលយប់", "ពេលព្រឹក", "មួយរសៀល", "Uptime"
     ];
@@ -1169,7 +1246,7 @@
       const [entryMode, setEntryMode] = useStickyState(false, 'checkme_entryMode');
       
       const [adminGroupFilter, setAdminGroupFilter] = useStickyState('ALL', 'checkme_adminGroupFilter');
-      const [adminShiftFilter, setAdminShiftFilter] = useStickyState('ALL', 'checkme_adminShiftFilter'); // (ថ្មី)
+      const [adminShiftFilter, setAdminShiftFilter] = useStickyState('ALL', 'checkme_adminShiftFilter');
       
       const [editingRecord, setEditingRecord] = useState(null);
       const [currentPage, setCurrentPage] = useState(1);
@@ -1214,6 +1291,7 @@
 
       useEffect(() => {
         if (!userId) return;
+        // ប្រើ CollectionGroup ដើម្បីទាញ 'records' ទាំងអស់
         const allRecordsQuery = db.collectionGroup('records');
         setLoading(true);
         setError(null);
@@ -1257,6 +1335,7 @@
               throw new Error("Google Sheet មិនមានទិន្នន័យ ឬ Header");
             }
             const employeeData = {};
+            // ចាប់ផ្តើមពី Row ទី 5 (Index 4)
             for (let i = 4; i < rows.length; i++) {
               const row = rows[i];
               const id = row[COL_INDEX.ID];
@@ -1291,6 +1370,7 @@
         fetchSheetData();
       }, []);
       
+      // Logic សម្រាប់ Filter ទំព័រ Home
       const filteredRecords = useMemo(() => {
         let records = attendanceRecords;
         if (filterToday) {
@@ -1309,25 +1389,37 @@
         setCurrentPage(1);
       }, [filterToday, filterIncomplete, filterIncompleteNotToday]);
       
-      const handleSaveRecord = async (updatedData) => {
-        const { employeeId, dateId, employeeName, department, grade, ...dataToSave } = updatedData;
+      // (កែប្រែ) Function រក្សាទុកទិន្នន័យ (Admin និង User)
+      const handleSaveRecord = async (updatedData, isAdminEntry = false) => {
+        const { employeeId, dateId } = updatedData;
         
         if (!employeeId || !dateId) {
           console.error("Missing Employee ID or Date ID");
           return;
         }
-        const recordDocRef = db.collection('attendance').doc(employeeId)
-                                .collection('records').doc(dateId);
-        const recordData = { ...dataToSave };
         
-        if (employeeName) recordData.employeeName = employeeName;
-        if (department) recordData.department = department;
-        if (grade) recordData.grade = grade;
+        const recordDocRef = db.collection('attendance').doc(String(employeeId))
+                                .collection('records').doc(dateId);
+        
+        let dataToSave = {};
+
+        if (isAdminEntry) {
+            // Admin Entry: រក្សាទុកទិន្នន័យទាំងអស់ (Full Info)
+            const { id, ...fullData } = updatedData;
+            dataToSave = fullData;
+        } else {
+            // User (EditModal): រក្សាទុកតែ checkIn/checkOut
+            dataToSave = {
+                checkIn: updatedData.checkIn,
+                checkOut: updatedData.checkOut
+            };
+        }
 
         try {
-          await recordDocRef.set(recordData, { merge: true }); 
+          // ប្រើ { merge: true } ដើម្បី Update ឬ Create ដោយមិនលុបទិន្នន័យចាស់
+          await recordDocRef.set(dataToSave, { merge: true }); 
           console.log("Record updated/created successfully!");
-          setEditingRecord(null);
+          setEditingRecord(null); // បិទ Modal (ប្រសិនបើជា EditModal)
         } catch (e) {
           console.error("Error updating document: ", e);
         }
