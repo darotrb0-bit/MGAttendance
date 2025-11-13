@@ -1009,7 +1009,6 @@
         // 4. ត្រងតាមការស្វែងរក (Search Filter)
         if (searchTerm.trim() !== '') {
           const lowerSearchTerm = searchTerm.toLowerCase();
-          // (FIX) កែ scheduledStaff ទៅ scheduledToday
           scheduledToday = scheduledToday.filter(emp => { 
             const name = emp['NAME'] ? emp['NAME'].toLowerCase() : '';
             const id = emp['ID'] ? String(emp['ID']).toLowerCase() : '';
@@ -1017,13 +1016,19 @@
           });
         }
         
+        // (FIX ថ្មី) ត្រងចេញបុគ្គលិកដែលបាន Check In រួចរាល់
+        scheduledToday = scheduledToday.filter(emp => {
+            const empId = String(emp['ID']);
+            const record = todayRecordsMap.get(empId);
+            // បង្ហាញតែអ្នកដែលមិនទាន់មាន Record ឬ Record មិនទាន់ Check In
+            return !record || checkEntryType(record.checkIn) === 'EMPTY';
+        });
+
         // 5. តម្រៀបតាមឈ្មោះ
-        // (FIX) កែ scheduledStaff ទៅ scheduledToday
         scheduledToday.sort((a, b) => (a['NAME'] || '').localeCompare(b['NAME'] || '')); 
         
-        // (FIX) កែ scheduledStaff ទៅ scheduledToday
         return scheduledToday; 
-      }, [schedules, shiftKey, loadingSchedules, adminGroupFilter, adminShiftFilter, searchTerm, VALID_SHIFTS]); // (កែប្រែ)
+      }, [schedules, shiftKey, loadingSchedules, adminGroupFilter, adminShiftFilter, searchTerm, VALID_SHIFTS, todayRecordsMap]); // (កែប្រែ)
 
       const formattedTitle = formatKhmerDate(selectedDate);
       
