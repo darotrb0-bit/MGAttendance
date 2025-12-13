@@ -809,6 +809,95 @@
         fetchRTDBData();
       }, []);
 
+      // Logic សម្រាប់ Filter ទំព័រ Home
+      const filteredRecords = useMemo(() => {
+        let records = attendanceRecords; 
+        
+        const normalize = (str) => {
+           if (!str) return '';
+           return str.replace(/\s+/g, '') 
+                     .replace(/[០-៩]/g, d => "0123456789"['០១២៣៤៥៦៧៨៩'.indexOf(d)]) 
+                     .toLowerCase();
+        };
+
+        const targetDepts = ['IT Support', 'DRB'].map(normalize);
+        
+        records = records.filter(record => {
+            const rDept = normalize(record.department);
+            const rGroup = normalize(record.group);
+            
+            return targetDepts.some(target => 
+                (rDept && rDept.includes(target)) || 
+                (rGroup && rGroup.includes(target))
+            );
+        });
+
+        if (filterUserShift !== 'ALL') {
+            records = records.filter(record => {
+                if (!schedules || !schedules[record.employeeId]) return false;
+                
+                const empSchedule = schedules[record.employeeId];
+                const date = new Date(record.dateId + 'T00:00:00'); 
+                const dayIndex = date.getDay(); 
+                const shiftKeys = ['SHIFT_SUN', 'SHIFT_MON', 'SHIFT_TUE', 'SHIFT_WED', 'SHIFT_THU', 'SHIFT_FRI', 'SHIFT_SAT'];
+                const shiftKey = shiftKeys[dayIndex];
+                const shift = empSchedule[shiftKey];
+                
+                if (!shift) return false;
+                
+                const normShift = normalize(shift);
+                const normFilter = normalize(filterUserShift);
+                
+                return normShift.includes(normFilter) || normFilter.includes(normShift);
+            });
+        }
+
+        if (filterToday) {
+          const today = getLocalDate();
+          records = records.filter(record => record.dateId === today);
+        } else if (filterIncomplete) {
+          records = records.filter(record => !record.checkIn || !record.checkOut);
+        } else if (filterIncompleteNotToday) {
+          const today = getLocalDate();
+          records = records.filter(record => (!record.checkIn || !record.checkOut) && record.dateId !== today);
+        } 
+        
+        if (filterScannedInOnly) {
+            records = records.filter(record => 
+                checkEntryType(record.checkIn) === 'TIME' && 
+                checkEntryType(record.checkOut) !== 'TIME'
+            );
+        } else if (filterCompleteScan) {
+            records = records.filter(record => 
+                checkEntryType(record.checkIn) === 'TIME' && 
+                checkEntryType(record.checkOut) === 'TIME'
+            );
+        }
+        
+        records.sort((a, b) => {
+            const hasCheckInA = checkEntryType(a.checkIn) === 'TIME';
+            const hasCheckInB = checkEntryType(b.checkIn) === 'TIME';
+
+            if (hasCheckInA && !hasCheckInB) return -1; 
+            if (!hasCheckInA && hasCheckInB) return 1;  
+            if (!hasCheckInA && !hasCheckInB) return 0; 
+
+            if (a.dateId !== b.dateId) {
+                return b.dateId.localeCompare(a.dateId); 
+            }
+            
+            const timeA = getTimeValue(a.checkIn);
+            const timeB = getTimeValue(b.checkIn);
+            return timeB - timeA; 
+        });
+
+        return records;
+      }, [attendanceRecords, filterToday, filterIncomplete, filterIncompleteNotToday, filterScannedInOnly, filterCompleteScan, filterUserShift, schedules]);
+      
+      useEffect(() => {
+        setCurrentPage(1);
+      }, [filterToday, filterIncomplete, filterIncompleteNotToday, filterScannedInOnly, filterCompleteScan, filterUserShift]);
+
       const handleSaveRecord = async (updatedData, isAdminEntry = false) => {
         const { employeeId, dateId } = updatedData;
         if (!employeeId || !dateId) return;
@@ -847,7 +936,7 @@
             <header className={`flex-shrink-0 p-4 w-full z-10 transition-colors duration-300 ${headerBg}`}><h1 className={`text-xl font-bold text-center tracking-wide ${headerText}`}>{getHeaderTitle()}</h1></header>
             <main className={`flex-1 overflow-y-auto custom-scrollbar ${textClass}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
               <div key={activePage} className="page-content-animation">
-                {activePage === 'home' && (<AttendanceList records={attendanceRecords} loading={loading} error={error} entryMode={entryMode} onRecordClick={(record) => setEditingRecord(record)} currentPage={currentPage} setCurrentPage={setCurrentPage} theme={theme} schedules={schedules || {}} filterUserShift={filterUserShift} />)}
+                {activePage === 'home' && (<AttendanceList records={filteredRecords} loading={loading} error={error} entryMode={entryMode} onRecordClick={(record) => setEditingRecord(record)} currentPage={currentPage} setCurrentPage={setCurrentPage} theme={theme} schedules={schedules || {}} filterUserShift={filterUserShift} />)}
                 {activePage === 'admin' && (<AttendanceAdminPage schedules={schedules} attendanceRecords={attendanceRecords} onManualCheckIn={handleSaveRecord} theme={theme} loadingSchedules={loadingSchedules} adminGroupFilter="IT Support" adminShiftFilter={adminShiftFilter} VALID_SHIFTS={VALID_SHIFTS} />)}
                 {activePage === 'profile' && <ProfilePage theme={theme} />}
                 {activePage === 'report' && <ReportPage records={attendanceRecords} theme={theme} />}
